@@ -103,8 +103,8 @@
 </div>
 
 <!-- Checkout Modal -->
-<div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
-    <div class="checkout-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
+<div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="checkout-form" style="background: var(--background); border-radius: var(--radius-lg); padding: 32px 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; margin: 16px;">
         <!-- Contact Method Summary -->
         <div id="contact-summary" style="background: var(--input); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
             <iconify-icon id="contact-icon" icon="lucide:send" style="font-size: 24px; color: #229ED9;"></iconify-icon>
@@ -114,21 +114,14 @@
             </div>
         </div>
 
-        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px;">Доставка</h2>
+        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px; text-align: center;">Доставка</h2>
 
         <form id="order-form" onsubmit="submitOrder(event)">
             <div style="display: flex; flex-direction: column; gap: 16px;">
-                <!-- Phone (hidden if Telegram selected and phone available) -->
-                <div id="phone-field">
+                <!-- Phone - always required for web -->
+                <div>
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Телефон *</label>
                     <input type="tel" id="phone" name="phone" required placeholder="+7 (999) 000-00-00"
-                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
-                </div>
-
-                <!-- Email (optional, auto-filled) -->
-                <div>
-                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Email</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com"
                            style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                 </div>
 
@@ -430,10 +423,8 @@
     // Показать форму оформления
     function showCheckout() {
         const modal = document.getElementById('checkout-modal');
-        const contactSummary = document.getElementById('contact-summary');
         const contactIcon = document.getElementById('contact-icon');
         const contactValue = document.getElementById('contact-value');
-        const phoneField = document.getElementById('phone-field');
         const phoneInput = document.getElementById('phone');
 
         // Устанавливаем минимальную дату - сегодня + 1 день
@@ -441,7 +432,7 @@
         tomorrow.setDate(tomorrow.getDate() + 1);
         const minDate = tomorrow.toISOString().split('T')[0];
         document.getElementById('delivery_date').setAttribute('min', minDate);
-        
+
         // Предлагаем завтрашнюю дату по умолчанию
         document.getElementById('delivery_date').value = minDate;
 
@@ -449,34 +440,16 @@
         if (selectedContactMethod === 'telegram') {
             contactIcon.setAttribute('icon', 'lucide:send');
             contactIcon.style.color = '#229ED9';
-            contactValue.textContent = user.username 
-                ? `@${user.username}` 
+            contactValue.textContent = user.username
+                ? `@${user.username}`
                 : `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram';
-            
-            // Скрываем поле телефона если есть данные в Telegram
-            if (user.phone) {
-                phoneField.style.display = 'none';
-                phoneInput.removeAttribute('required');
-            } else {
-                phoneField.style.display = 'block';
-                phoneInput.setAttribute('required', 'required');
-            }
         } else {
             contactIcon.setAttribute('icon', 'lucide:phone');
             contactIcon.style.color = '#22c55e';
-            
-            // Показываем номер телефона
-            const phoneValue = user.phone || document.getElementById('manual-phone')?.value || 'По телефону';
-            contactValue.textContent = phoneValue;
-            
-            phoneField.style.display = 'block';
-            phoneInput.setAttribute('required', 'required');
+            contactValue.textContent = user.phone || document.getElementById('manual-phone')?.value || 'По телефону';
         }
 
-        // Автозаполнение полей
-        fillCheckoutForm();
-
-        // Устанавливаем телефон
+        // Телефон всегда показываем и требуем для веба
         if (user.phone) {
             phoneInput.value = user.phone;
         } else if (selectedContactMethod === 'phone') {
@@ -484,12 +457,6 @@
             if (manualPhone?.value) {
                 phoneInput.value = manualPhone.value;
             }
-        }
-
-        // Email автозаполнение
-        const emailInput = document.getElementById('email');
-        if (!emailInput.value && user.username) {
-            emailInput.value = `${user.username}@telegram.com`;
         }
 
         // Время доставки - предлагаем "В течение дня"
@@ -505,7 +472,7 @@
             window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
 
-        // Показываем Telegram MainButton
+        // Показываем Telegram MainButton только в TMA
         if (window.Telegram?.WebApp?.MainButton) {
             const tg = window.Telegram.WebApp;
             tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${Math.round(total)}₽`);
@@ -544,20 +511,13 @@
 
         // Определяем предпочтительный способ связи
         let preferredContact = selectedContactMethod || 'telegram';
-        
-        // Получаем телефон с учётом видимости поля
-        let phoneValue = document.getElementById('phone').value;
-        if (selectedContactMethod === 'telegram' && user.phone) {
-            phoneValue = user.phone;
-        }
 
         const orderData = {
             items: cart.map(item => ({
                 product_id: item.id,
                 quantity: item.quantity
             })),
-            phone: phoneValue,
-            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
             delivery_address: document.getElementById('delivery_address').value,
             delivery_date: document.getElementById('delivery_date').value,
             delivery_time: document.getElementById('delivery_time').value,
@@ -604,16 +564,16 @@
             hideCheckout();
             hideContactMethod();
 
-            // Закрываем TMA через 1.5 секунды (уведомления отправляются на бэкенде)
-            setTimeout(() => {
-                if (window.Telegram?.WebApp) {
+            // Обработка для TMA и веба
+            if (window.Telegram?.WebApp) {
+                // TMA - закрываем через 1.5 секунды
+                setTimeout(() => {
                     window.Telegram.WebApp.close();
-                }
-                // Если не в TMA, перенаправляем на страницу успеха
-                if (!window.Telegram?.WebApp) {
-                    window.location.href = `/order-success/?order_id=${order.id}`;
-                }
-            }, 1500);
+                }, 1500);
+            } else {
+                // Веб - показываем уведомление и перенаправляем
+                showSuccessNotification(order.id);
+            }
 
         } catch (error) {
             console.error('Error creating order:', error);
@@ -622,10 +582,55 @@
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
-            
+
             submitBtn.disabled = false;
             submitBtn.textContent = 'Оформить заказ';
         }
+    }
+
+    // Показ уведомления об успехе (для веба)
+    function showSuccessNotification(orderId) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        `;
+        notification.innerHTML = `
+            <div style="
+                background: var(--background);
+                border-radius: var(--radius-lg);
+                padding: 40px 32px;
+                max-width: 400px;
+                text-align: center;
+            ">
+                <iconify-icon icon="lucide:check-circle" style="font-size: 64px; color: #22c55e; margin-bottom: 24px;"></iconify-icon>
+                <h2 style="font-size: 22px; font-weight: 600; margin-bottom: 12px;">Заказ #${orderId} оформлен!</h2>
+                <p style="color: var(--muted-foreground); font-size: 15px; line-height: 1.5; margin-bottom: 32px;">
+                    Сообщение отправлено.<br>С вами скоро свяжутся для подтверждения доставки.
+                </p>
+                <button onclick="window.location.href='/'" style="
+                    width: 100%;
+                    padding: 16px;
+                    border: none;
+                    background: var(--foreground);
+                    color: var(--background);
+                    border-radius: var(--radius-xl);
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                ">На главную</button>
+            </div>
+        `;
+        document.body.appendChild(notification);
     }
 
     // Инициализация
