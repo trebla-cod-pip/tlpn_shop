@@ -121,15 +121,37 @@
     }
 
     // Добавление в корзину
+    async function syncCartSession(cartData) {
+        try {
+            await fetch('/cart-sync/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(cartData),
+            });
+        } catch (error) {
+            console.error('Cart sync failed:', error);
+        }
+    }
+
+    function buildCartPayload(items) {
+        return items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            category: item.category_name || item.category || '',
+            total: (item.price || 0) * item.quantity,
+            image: item.cart_image || item.image,
+        }));
+    }
+
     function addToCart() {
         if (!product) return;
-        
-        // Получаем текущую корзину
+
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        
-        // Проверяем, есть ли товар уже в корзине
+
         const existingItem = cart.find(item => item.id === product.id);
-        
+
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
@@ -140,30 +162,29 @@
                 price: parseFloat(product.price),
                 image: product.image,
                 cart_image: product.cart_image || product.image,
-                quantity: quantity
+                quantity: quantity,
             });
         }
-        
-        // Сохраняем корзину
+
         localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Haptic feedback
+        syncCartSession(buildCartPayload(cart));
+
         if (tg.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('success');
         }
-        
-        // Показывем подтверждение
+
         const btn = document.getElementById('add-to-cart-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span>Добавлено!</span>';
         btn.style.background = 'var(--success-foreground)';
-        
+
         setTimeout(() => {
             btn.innerHTML = originalText;
             btn.style.background = 'var(--foreground)';
             navigateTo('/bag/');
         }, 800);
     }
+
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
