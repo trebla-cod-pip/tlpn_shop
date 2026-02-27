@@ -64,7 +64,15 @@ class TrackingAPIView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        serializer = TrackingEventBatchSerializer(data=request.data)
+        try:
+            payload = json.loads(request.body.decode('utf-8') or '{}')
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return Response(
+                {'status': 'error', 'detail': 'Invalid JSON payload'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = TrackingEventBatchSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
         
         events_data = serializer.validated_data['events']

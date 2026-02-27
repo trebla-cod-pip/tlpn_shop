@@ -1,6 +1,6 @@
-"""
-Middleware для трекинга пользовательских сессий и событий
-Захватывает UTM-метки, referer, user agent
+﻿"""
+Middleware РґР»СЏ С‚СЂРµРєРёРЅРіР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёС… СЃРµСЃСЃРёР№ Рё СЃРѕР±С‹С‚РёР№
+Р—Р°С…РІР°С‚С‹РІР°РµС‚ UTM-РјРµС‚РєРё, referer, user agent
 """
 import hashlib
 from datetime import timedelta
@@ -11,54 +11,58 @@ from analytics.models import TrackingSession, hash_ip, detect_device_type, parse
 
 class AnalyticsMiddleware:
     """
-    Middleware для автоматического трекинга сессий
+    Middleware РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРіРѕ С‚СЂРµРєРёРЅРіР° СЃРµСЃСЃРёР№
     
-    Добавляет в settings.py:
+    Р”РѕР±Р°РІР»СЏРµС‚ РІ settings.py:
     MIDDLEWARE = [
         ...
         'analytics.middleware.AnalyticsMiddleware',
     ]
     """
     
-    # URL-паттерны для определения шагов воронки
+    # URL-РїР°С‚С‚РµСЂРЅС‹ РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ С€Р°РіРѕРІ РІРѕСЂРѕРЅРєРё
     FUNNEL_PATTERNS = {
-        1: ['/', '/home'],  # Главная
-        2: ['/catalog', '/category', '/products'],  # Каталог
-        3: ['/item/', '/product/'],  # Карточка товара
-        4: ['/bag/', '/cart/'],  # Корзина
-        5: ['/checkout'],  # Начало оформления
-        6: ['/checkout/delivery'],  # Доставка
-        7: ['/checkout/payment'],  # Оплата
-        8: ['/checkout/complete', '/order/complete'],  # Заказ создан
+        1: ['/', '/home'],  # Р“Р»Р°РІРЅР°СЏ
+        2: ['/catalog', '/category', '/products'],  # РљР°С‚Р°Р»РѕРі
+        3: ['/item/', '/product/'],  # РљР°СЂС‚РѕС‡РєР° С‚РѕРІР°СЂР°
+        4: ['/bag/', '/cart/'],  # РљРѕСЂР·РёРЅР°
+        5: ['/checkout'],  # РќР°С‡Р°Р»Рѕ РѕС„РѕСЂРјР»РµРЅРёСЏ
+        6: ['/checkout/delivery'],  # Р”РѕСЃС‚Р°РІРєР°
+        7: ['/checkout/payment'],  # РћРїР»Р°С‚Р°
+        8: ['/checkout/complete', '/order/complete'],  # Р—Р°РєР°Р· СЃРѕР·РґР°РЅ
     }
     
     def __init__(self, get_response):
         self.get_response = get_response
-        self.session_timeout = getattr(settings, 'ANALYTICS_SESSION_TIMEOUT', 30 * 60)  # 30 мин
+        self.session_timeout = getattr(settings, 'ANALYTICS_SESSION_TIMEOUT', 30 * 60)  # 30 РјРёРЅ
         
     def __call__(self, request):
-        # Пропускаем если пользователь opt-out
+        # РџСЂРѕРїСѓСЃРєР°РµРј РµСЃР»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ opt-out
         if request.COOKIES.get('analytics_optout'):
             return self.get_response(request)
-        
-        # Получаем или создаём сессию
+
+        # Do not track analytics ingestion endpoint itself
+        if request.path.startswith('/analytics/track'):
+            return self.get_response(request)
+
+        # Получаем или создаём сессию трекинга
         session = self._get_or_create_session(request)
         
-        # Сохраняем session_id в request для доступа в views
+        # РЎРѕС…СЂР°РЅСЏРµРј session_id РІ request РґР»СЏ РґРѕСЃС‚СѓРїР° РІ views
         request.analytics_session = session
         
-        # Определяем шаг воронки (только если сессия создана)
+        # РћРїСЂРµРґРµР»СЏРµРј С€Р°Рі РІРѕСЂРѕРЅРєРё (С‚РѕР»СЊРєРѕ РµСЃР»Рё СЃРµСЃСЃРёСЏ СЃРѕР·РґР°РЅР°)
         if session:
             funnel_step = self._detect_funnel_step(request.path)
             if funnel_step:
                 self._track_funnel_step(request, session, funnel_step)
             
-            # Трекаем page view
+            # РўСЂРµРєР°РµРј page view
             self._track_page_view(request, session)
         
         response = self.get_response(request)
         
-        # Обновляем last_activity
+        # РћР±РЅРѕРІР»СЏРµРј last_activity
         if session:
             TrackingSession.objects.filter(id=session.id).update(
                 last_activity=timezone.now()
@@ -67,7 +71,7 @@ class AnalyticsMiddleware:
         return response
     
     def _get_client_ip(self, request):
-        """Получает IP адрес клиента"""
+        """РџРѕР»СѓС‡Р°РµС‚ IP Р°РґСЂРµСЃ РєР»РёРµРЅС‚Р°"""
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip = x_forwarded_for.split(',')[0].strip()
@@ -76,23 +80,23 @@ class AnalyticsMiddleware:
         return ip
     
     def _get_or_create_session(self, request):
-        """Получает или создаёт сессию трекинга"""
+        """РџРѕР»СѓС‡Р°РµС‚ РёР»Рё СЃРѕР·РґР°С‘С‚ СЃРµСЃСЃРёСЋ С‚СЂРµРєРёРЅРіР°"""
         session_key = request.session.session_key
 
-        # Если нет session_key, создаём сессию Django
+        # Р•СЃР»Рё РЅРµС‚ session_key, СЃРѕР·РґР°С‘Рј СЃРµСЃСЃРёСЋ Django
         if not session_key:
-            # Сохраняем что-то в сессию чтобы она создалась
+            # РЎРѕС…СЂР°РЅСЏРµРј С‡С‚Рѕ-С‚Рѕ РІ СЃРµСЃСЃРёСЋ С‡С‚РѕР±С‹ РѕРЅР° СЃРѕР·РґР°Р»Р°СЃСЊ
             request.session['analytics_init'] = '1'
             session_key = request.session.session_key
 
-        # Если всё ещё нет session_key, пробуем из cookie
+        # Р•СЃР»Рё РІСЃС‘ РµС‰С‘ РЅРµС‚ session_key, РїСЂРѕР±СѓРµРј РёР· cookie
         if not session_key:
             session_key = request.COOKIES.get('analytics_session_id')
 
         if not session_key:
             return None
         
-        # Используем get_or_create для избежания гонки
+        # РСЃРїРѕР»СЊР·СѓРµРј get_or_create РґР»СЏ РёР·Р±РµР¶Р°РЅРёСЏ РіРѕРЅРєРё
         session, created = TrackingSession.objects.get_or_create(
             session_key=session_key,
             defaults={
@@ -107,14 +111,14 @@ class AnalyticsMiddleware:
         )
         
         if not created:
-            # Проверяем не истекла ли сессия
+            # РџСЂРѕРІРµСЂСЏРµРј РЅРµ РёСЃС‚РµРєР»Р° Р»Рё СЃРµСЃСЃРёСЏ
             if timezone.now() - session.last_activity > timedelta(seconds=self.session_timeout):
-                # Сессия истекла, создаём новую
+                # РЎРµСЃСЃРёСЏ РёСЃС‚РµРєР»Р°, СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ
                 session.is_active = False
                 session.ended_at = timezone.now()
                 session.save()
                 
-                # Создаём новую сессию
+                # РЎРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ СЃРµСЃСЃРёСЋ
                 session = TrackingSession.objects.create(
                     session_key=session_key,
                     user=request.user if request.user.is_authenticated else None,
@@ -129,7 +133,7 @@ class AnalyticsMiddleware:
         return session
     
     def _extract_utm_params(self, request):
-        """Извлекает UTM-параметры из запроса"""
+        """РР·РІР»РµРєР°РµС‚ UTM-РїР°СЂР°РјРµС‚СЂС‹ РёР· Р·Р°РїСЂРѕСЃР°"""
         return {
             'utm_source': request.GET.get('utm_source', ''),
             'utm_medium': request.GET.get('utm_medium', ''),
@@ -140,7 +144,7 @@ class AnalyticsMiddleware:
         }
     
     def _detect_funnel_step(self, path):
-        """Определяет шаг воронки по URL"""
+        """РћРїСЂРµРґРµР»СЏРµС‚ С€Р°Рі РІРѕСЂРѕРЅРєРё РїРѕ URL"""
         path_lower = path.lower()
         for step, patterns in self.FUNNEL_PATTERNS.items():
             if any(pattern in path_lower for pattern in patterns):
@@ -148,10 +152,10 @@ class AnalyticsMiddleware:
         return None
     
     def _track_funnel_step(self, request, session, step):
-        """Трекает шаг воронки"""
+        """РўСЂРµРєР°РµС‚ С€Р°Рі РІРѕСЂРѕРЅРєРё"""
         from analytics.models import FunnelStep
         
-        # Проверяем не был ли уже этот шаг
+        # РџСЂРѕРІРµСЂСЏРµРј РЅРµ Р±С‹Р» Р»Рё СѓР¶Рµ СЌС‚РѕС‚ С€Р°Рі
         existing = FunnelStep.objects.filter(
             session=session,
             step=step
@@ -165,10 +169,10 @@ class AnalyticsMiddleware:
             )
     
     def _track_page_view(self, request, session):
-        """Трекает просмотр страницы"""
+        """РўСЂРµРєР°РµС‚ РїСЂРѕСЃРјРѕС‚СЂ СЃС‚СЂР°РЅРёС†С‹"""
         from analytics.models import TrackingEvent
         
-        # Не трекаем админку и статику
+        # РќРµ С‚СЂРµРєР°РµРј Р°РґРјРёРЅРєСѓ Рё СЃС‚Р°С‚РёРєСѓ
         if (request.path.startswith('/admin/') or 
             request.path.startswith('/static/') or
             request.path.startswith('/media/')):
@@ -186,3 +190,4 @@ class AnalyticsMiddleware:
                 'method': request.method,
             }
         )
+

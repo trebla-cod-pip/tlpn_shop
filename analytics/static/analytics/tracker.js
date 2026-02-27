@@ -31,6 +31,7 @@
         startTime: Date.now(),
         pageViewId: generateId(),
     };
+    let batchTimer = null;
 
     // Логгер
     const log = (...args) => {
@@ -52,6 +53,16 @@
         if (isOptOut()) {
             log('Opt-out detected, skipping initialization');
             return;
+        }
+
+        if (batchTimer) {
+            clearInterval(batchTimer);
+            batchTimer = null;
+        }
+        if (CONFIG.batchEvents) {
+            batchTimer = setInterval(() => {
+                flushEvents();
+            }, CONFIG.batchDelay);
         }
 
         // Получаем session ID
@@ -122,7 +133,8 @@
         const payload = JSON.stringify({ events: eventsToSend });
         
         if (navigator.sendBeacon) {
-            navigator.sendBeacon(CONFIG.endpoint, payload);
+            const beaconBody = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(CONFIG.endpoint, beaconBody);
         } else {
             // Fallback для старых браузеров
             fetch(CONFIG.endpoint, {
@@ -386,6 +398,10 @@
         optOut: () => {
             document.cookie = 'analytics_optout=1; path=/; max-age=31536000';
             state.events = [];
+            if (batchTimer) {
+                clearInterval(batchTimer);
+                batchTimer = null;
+            }
         },
         optIn: () => {
             document.cookie = 'analytics_optout=0; path=/; max-age=-1';
@@ -397,6 +413,15 @@
         getConfig: () => ({ ...CONFIG }),
         setConfig: (newConfig) => {
             Object.assign(CONFIG, newConfig);
+            if (batchTimer) {
+                clearInterval(batchTimer);
+                batchTimer = null;
+            }
+            if (CONFIG.batchEvents) {
+                batchTimer = setInterval(() => {
+                    flushEvents();
+                }, CONFIG.batchDelay);
+            }
         },
     };
 
