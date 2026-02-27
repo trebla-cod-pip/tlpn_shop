@@ -130,24 +130,18 @@ setup_project() {
 # =============================================================================
 
 setup_fonts() {
-    info "Настройка шрифтов..."
+    info "Configuring local fonts..."
     cd "$PROJECT_ROOT"
-    
+
     mkdir -p static/fonts static/css
-    
-    # Скачивание Inter
-    info "  Загрузка шрифтов Inter..."
-    
+
     # Google Fonts URLs
     curl -sL "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2" -o static/fonts/Inter-400.woff2
     curl -sL "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZ9hjp-Ek-_EeA.woff2" -o static/fonts/Inter-500.woff2
     curl -sL "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fMZ9hjp-Ek-_EeA.woff2" -o static/fonts/Inter-600.woff2
     curl -sL "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZ9hjp-Ek-_EeA.woff2" -o static/fonts/Inter-700.woff2
     curl -sL "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuOKfMZ9hjp-Ek-_EeA.woff2" -o static/fonts/Inter-300.woff2
-    
-    success "Шрифты загружены"
-    
-    # CSS
+
     cat > static/css/fonts.css <<'EOF'
 @font-face {
     font-family: 'Inter';
@@ -189,20 +183,15 @@ setup_fonts() {
     src: url('../fonts/Inter-700.woff2') format('woff2');
 }
 EOF
-    
-    success "CSS шрифтов создан"
-    
-    # Обновление template
-    if ! grep -q "static/css/fonts.css" templates/base.html; then
-        sed -i '/<link href="https:\/\/fonts.googleapis.com\/css2?family=Inter/i\    <!-- Local Fonts -->\n    <link rel="stylesheet" href="{% static '\''css/fonts.css'\'' %}">' templates/base.html
-        success "Шаблон обновлён"
-    fi
-    
-    # Recollect static
-    python manage.py collectstatic --noinput
-    success "Статика обновлена"
-}
 
+    if ! grep -q "static 'css/fonts.css'" templates/base.html; then
+        sed -i '/<head>/a\    <!-- Local Fonts -->\n    <link rel="stylesheet" href="{% static '\''css/fonts.css'\'' %}">' templates/base.html
+        success "Template updated with local fonts"
+    fi
+
+    python manage.py collectstatic --noinput
+    success "Local fonts configured"
+}
 # =============================================================================
 # Gunicorn
 # =============================================================================
@@ -552,3 +541,4 @@ main() {
 }
 
 main "$@"
+

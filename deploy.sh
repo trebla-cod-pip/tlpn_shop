@@ -79,6 +79,39 @@ setup_static_dirs() {
     success "Static/media directories are ready"
 }
 
+fix_runtime_permissions() {
+    info "Fixing runtime permissions..."
+
+    mkdir -p "$MEDIA_ROOT"
+
+    # Sync legacy media from project dir to nginx media dir.
+    if [ -d "$PROJECT_ROOT/media" ] && [ "$(ls -A "$PROJECT_ROOT/media" 2>/dev/null)" ]; then
+        cp -an "$PROJECT_ROOT/media/." "$MEDIA_ROOT/" || true
+    fi
+
+    chown -R "$APP_USER:$APP_GROUP" "$MEDIA_ROOT"
+    find "$MEDIA_ROOT" -type d -exec chmod 755 {} \; 2>/dev/null || true
+    find "$MEDIA_ROOT" -type f -exec chmod 644 {} \; 2>/dev/null || true
+
+    # SQLite must be writable by the gunicorn user.
+    if [ -f "$PROJECT_ROOT/db.sqlite3" ]; then
+        chown "$APP_USER:$APP_GROUP" "$PROJECT_ROOT/db.sqlite3"
+        chmod 664 "$PROJECT_ROOT/db.sqlite3"
+    fi
+    for sidecar in "$PROJECT_ROOT/db.sqlite3-wal" "$PROJECT_ROOT/db.sqlite3-shm" "$PROJECT_ROOT/db.sqlite3-journal"; do
+        if [ -e "$sidecar" ]; then
+            chown "$APP_USER:$APP_GROUP" "$sidecar"
+            chmod 664 "$sidecar"
+        fi
+    done
+
+    # Allow gunicorn worker user to create control files in project root.
+    chown root:"$APP_GROUP" "$PROJECT_ROOT"
+    chmod 775 "$PROJECT_ROOT"
+
+    success "Runtime permissions fixed"
+}
+
 deploy_project() {
     info "Deploying project..."
     cd "$PROJECT_ROOT"
@@ -345,6 +378,7 @@ main() {
 
     case "${1:-}" in
         --proxy-only)
+            fix_runtime_permissions
             setup_gunicorn
             setup_nginx_http
             get_ssl
@@ -369,6 +403,7 @@ main() {
             setup_system
             setup_static_dirs
             deploy_project
+            fix_runtime_permissions
             setup_gunicorn
             setup_nginx_http
             get_ssl

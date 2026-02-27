@@ -3,6 +3,10 @@
 
 {% block title %}Главная - Tulipa{% endblock %}
 
+{% block extra_css %}
+<link rel="preload" as="image" href="https://storage.googleapis.com/banani-generated-images/generated-images/fd632ab9-5d62-4d28-a72e-e57783a946fa.jpg">
+{% endblock %}
+
 {% block content %}
 <div class="app-inner">
     <!-- Header -->
@@ -34,9 +38,10 @@
                 Свежие тюльпаны в скандинавском стиле с доставкой в день заказа.
             </p>
         </div>
-        <div class="hero-media" style="width: 100%; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
+        <div class="hero-media" style="width: 100%; aspect-ratio: 4 / 3; min-height: 220px; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
             <img class="hero-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
                  src="https://storage.googleapis.com/banani-generated-images/generated-images/fd632ab9-5d62-4d28-a72e-e57783a946fa.jpg" 
+                 width="1200" height="900" fetchpriority="high" decoding="async"
                  alt="Избранный букет белых тюльпанов">
         </div>
     </section>
@@ -57,7 +62,7 @@
         </div>
         
         <!-- Loading state -->
-        <div id="products-loading" class="loading">
+        <div id="products-loading" class="loading" style="min-height: 240px;">
             <div class="spinner"></div>
         </div>
         
@@ -67,7 +72,7 @@
         </div>
         
         <!-- Products grid -->
-        <div class="product-grid" id="products-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; display: none;">
+        <div class="product-grid" id="products-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-height: 240px;">
             <!-- Товары будут загружены через JS -->
         </div>
     </section>
@@ -152,7 +157,8 @@
         
         loading.style.display = 'flex';
         error.style.display = 'none';
-        grid.style.display = 'none';
+        grid.style.opacity = '0.45';
+        grid.style.pointerEvents = 'none';
         grid.innerHTML = '';
         
         try {
@@ -169,10 +175,13 @@
             });
             
             loading.style.display = 'none';
-            grid.style.display = 'grid';
+            grid.style.opacity = '1';
+            grid.style.pointerEvents = 'auto';
         } catch (error) {
             console.error('Error loading products:', error);
             loading.style.display = 'none';
+            grid.style.opacity = '1';
+            grid.style.pointerEvents = 'auto';
             error.style.display = 'block';
         }
     }
@@ -191,6 +200,7 @@
             <div class="product-media" style="width: 100%; aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; background: var(--muted);">
                 <img class="product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
                      src="${product.image || 'https://via.placeholder.com/300x400'}" 
+                     loading="lazy" decoding="async" width="600" height="800"
                      alt="${product.name}">
             </div>
             <div class="product-name" style="font-size: 14px; font-weight: 500; line-height: 1.3;">${product.name}</div>

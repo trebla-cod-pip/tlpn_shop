@@ -124,20 +124,18 @@ EOF
 
 # Обновление шаблона base.html
 update_template() {
-    info "Обновление шаблона base.html..."
-    
-    # Проверяем, есть ли уже локальная ссылка на шрифты
-    if grep -q "static/fonts" templates/base.html; then
-        success "Шаблон уже обновлён"
+    info "Updating base.html template..."
+
+    if grep -q "static 'css/fonts.css'" templates/base.html; then
+        success "Template already configured for local fonts"
         return
     fi
-    
-    # Добавляем локальный CSS после Google Fonts
-    sed -i '/<link href="https:\/\/fonts.googleapis.com\/css2?family=Inter/i\    <!-- Local Fonts -->\n    <link rel="stylesheet" href="{% static '\''css/fonts.css'\'' %}">\n' templates/base.html
-    
-    success "Шаблон base.html обновлён"
-}
 
+    # Insert local fonts stylesheet right after <head>
+    sed -i '/<head>/a\    <!-- Local Fonts -->\n    <link rel="stylesheet" href="{% static '\''css/fonts.css'\'' %}">' templates/base.html
+
+    success "Template updated: local fonts enabled"
+}
 # Сбор статических файлов
 collect_static() {
     info "Сбор статических файлов..."
@@ -189,3 +187,4 @@ main() {
 }
 
 main "$@"
+
