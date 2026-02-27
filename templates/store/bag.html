@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Корзина - Tulipa{% endblock %}
+
+{% block content %}
+<div class="app" style="min-height: 100vh; background: var(--background); color: var(--foreground); display: flex; flex-direction: column;">
+    <div class="app-inner" style="flex: 1; display: flex; flex-direction: column;">
+        <!-- Header -->
+        <header class="hdr" style="padding: 32px 24px 16px; display: flex; align-items: center; justify-content: center;">
+            <h1 class="page-title" style="font-size: 11px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: var(--muted-foreground);">Корзина</h1>
+        </header>
+
+        <!-- Empty Cart State -->
+        <div id="empty-cart" style="display: none; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center;">
+            <iconify-icon icon="lucide:shopping-bag" style="font-size: 64px; color: var(--muted-foreground); margin-bottom: 16px;"></iconify-icon>
+            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Ваша корзина пуста</h2>
+            <p style="color: var(--muted-foreground); margin-bottom: 24px;">Добавьте красивые тюльпаны чтобы начать</p>
+            <button onclick="navigateTo('/')" style="background: var(--foreground); color: var(--background); padding: 14px 32px; border-radius: var(--radius-xl); border: none; font-size: 14px; font-weight: 500; cursor: pointer;">
+                В каталог
+            </button>
+        </div>
+
+        <!-- Cart Content -->
+        <main class="cart-content" id="cart-content" style="flex: 1; display: flex; flex-direction: column; display: none;">
+            <!-- Cart Items -->
+            <div class="cart-list" id="cart-items" style="display: flex; flex-direction: column;">
+                <!-- Items will be rendered by JS -->
+            </div>
+
+            <!-- Summary -->
+            <div class="cart-summary" style="margin-top: auto; padding: 32px 24px;">
+                <div class="summary-line" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 16px; margin-bottom: 24px; font-family: 'Courier New', monospace; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">
+                    <span id="items-count">0 товаров</span>
+                    <span id="total-amount">0 ₽</span>
+                </div>
+                <button class="checkout-btn" onclick="showCheckout()" style="width: 100%; padding: 18px; border: 1px solid var(--foreground); background: transparent; color: var(--foreground); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer;">
+                    Оформить заказ
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" style="border-top: 1px solid var(--border); background: var(--background); padding: 16px 24px 32px;">
+        <div class="bottom-nav-inner" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="/" class="nav-item">
+                <iconify-icon icon="lucide:home" style="font-size: 22px;"></iconify-icon>
+                <span>Главная</span>
+            </a>
+            <a href="/search/" class="nav-item">
+                <iconify-icon icon="lucide:search" style="font-size: 22px;"></iconify-icon>
+                <span>Поиск</span>
+            </a>
+            <a href="/bag/" class="nav-item nav-item--active">
+                <iconify-icon icon="lucide:shopping-bag" style="font-size: 22px;"></iconify-icon>
+                <span>Корзина</span>
+            </a>
+            <a href="/profile/" class="nav-item">
+                <iconify-icon icon="lucide:user" style="font-size: 22px;"></iconify-icon>
+                <span>Профиль</span>
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Checkout Modal -->
+<div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
+    <div class="checkout-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
+        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px;">Данные доставки</h2>
+        
+        <form id="order-form" onsubmit="submitOrder(event)">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Телефон *</label>
+                    <input type="tel" id="phone" name="phone" required placeholder="+7 (999) 000-00-00" 
+                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Email</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" 
+                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Адрес доставки *</label>
+                    <textarea id="delivery_address" name="delivery_address" required rows="3" placeholder="Улица, дом, квартира..." 
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input); resize: none;"></textarea>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Дата доставки *</label>
+                        <input type="date" id="delivery_date" name="delivery_date" required 
+                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Время доставки</label>
+                        <input type="text" id="delivery_time" name="delivery_time" placeholder="10:00-12:00" 
+                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Комментарий</label>
+                    <textarea id="comment" name="comment" rows="2" placeholder="Пожелания к заказу..." 
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input); resize: none;"></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="button" onclick="hideCheckout()" style="flex: 1; padding: 16px; border: 1px solid var(--border); background: transparent; border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: pointer;">
+                    Отмена
+                </button>
+                <button type="submit" id="submit-btn" style="flex: 1; padding: 16px; border: none; background: var(--foreground); color: var(--background); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: pointer;">
+                    Оформить заказ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cart = [];
+    let total = 0;
+
+    // Загрузка корзины
+    function loadCart() {
+        cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        renderCart();
+    }
+
+    // Отрисовка корзины
+    function renderCart() {
+        const emptyCart = document.getElementById('empty-cart');
+        const cartContent = document.getElementById('cart-content');
+        const cartItems = document.getElementById('cart-items');
+        
+        if (cart.length === 0) {
+            emptyCart.style.display = 'flex';
+            cartContent.style.display = 'none';
+            return;
+        }
+        
+        emptyCart.style.display = 'none';
+        cartContent.style.display = 'flex';
+        
+        cartItems.innerHTML = '';
+        total = 0;
+        
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            
+            const itemElement = document.createElement('div');
+            itemElement.className = 'cart-item';
+            itemElement.style.cssText = 'display: flex; padding: 24px; gap: 20px; border-bottom: 1px solid var(--border);';
+            itemElement.innerHTML = `
+                <div class="cart-img-wrap" style="width: 80px; height: 80px; flex-shrink: 0; background: var(--muted);">
+                    <img class="cart-img" style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                         src="${item.cart_image || item.image || 'https://via.placeholder.com/80'}" alt="${item.name}">
+                </div>
+                <div class="cart-details" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="cart-top" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div class="cart-name" style="font-family: 'Times New Roman', serif; font-size: 16px; font-weight: 400; line-height: 1.2;">${item.name}</div>
+                        <div class="remove-btn" onclick="removeItem(${index})" style="display: flex; align-items: center; justify-content: center; padding: 4px; margin: -4px -4px -4px 0; opacity: 0.4; cursor: pointer;">
+                            <iconify-icon icon="lucide:x" style="font-size: 16px; color: var(--foreground)"></iconify-icon>
+                        </div>
+                    </div>
+                    <div class="cart-bottom" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="qty-stepper" style="display: flex; align-items: center; gap: 16px;">
+                            <div class="qty-btn" onclick="updateQuantity(${index}, -1)" style="font-size: 16px; font-weight: 300; color: var(--muted-foreground); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">–</div>
+                            <div class="qty-val" style="font-size: 13px; font-weight: 300; color: var(--foreground);">${item.quantity}</div>
+                            <div class="qty-btn" onclick="updateQuantity(${index}, 1)" style="font-size: 16px; font-weight: 300; color: var(--muted-foreground); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">+</div>
+                        </div>
+                        <div class="cart-price" style="font-family: 'Courier New', monospace; font-size: 14px; font-weight: 300; color: var(--foreground);">${itemTotal.toFixed(2)} ₽</div>
+                    </div>
+                </div>
+            `;
+            cartItems.appendChild(itemElement);
+        });
+        
+        // Обновляем итоговую сумму
+        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        document.getElementById('items-count').textContent = `${itemCount} товар${itemCount === 1 ? '' : (itemCount < 5 ? 'а' : 'ов')}`;
+        document.getElementById('total-amount').textContent = `${total.toFixed(2)} ₽`;
+    }
+
+    // Обновление количества
+    function updateQuantity(index, delta) {
+        cart[index].quantity += delta;
+        
+        if (cart[index].quantity <= 0) {
+            removeItem(index);
+            return;
+        }
+        
+        saveCart();
+        renderCart();
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    // Удаление товара
+    function removeItem(index) {
+        cart.splice(index, 1);
+        saveCart();
+        renderCart();
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    }
+
+    // Сохранение корзины
+    function saveCart() {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    // Показать форму оформления
+    function showCheckout() {
+        document.getElementById('checkout-modal').style.display = 'flex';
+        
+        // Устанавливаем минимальную дату - сегодня
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('delivery_date').setAttribute('min', today);
+        
+        // Заполняем данные из Telegram
+        if (user) {
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('email').value = user.email || '';
+        }
+    }
+
+    // Скрыть форму оформления
+    function hideCheckout() {
+        document.getElementById('checkout-modal').style.display = 'none';
+    }
+
+    // Отправка заказа
+    async function submitOrder(event) {
+        event.preventDefault();
+        
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Обработка...';
+        
+        const orderData = {
+            items: cart.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity
+            })),
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            delivery_address: document.getElementById('delivery_address').value,
+            delivery_date: document.getElementById('delivery_date').value,
+            delivery_time: document.getElementById('delivery_time').value,
+            comment: document.getElementById('comment').value,
+            telegram_user_id: user?.id,
+            telegram_username: user?.username,
+            telegram_first_name: user?.first_name,
+            telegram_last_name: user?.last_name
+        };
+        
+        try {
+            const response = await fetch('/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Не удалось создать заказ');
+            }
+            
+            const order = await response.json();
+            
+            // Очищаем корзину
+            localStorage.removeItem('cart');
+            
+            // Haptic feedback
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+            
+            // Показываем подтверждение
+            alert(`Заказ #${order.id} создан!\nМы свяжемся с вами в ближайшее время.`);
+            
+            // Перенаправляем на главную
+            window.location.href = '/';
+            
+        } catch (error) {
+            console.error('Error creating order:', error);
+            alert(`Ошибка: ${error.message}`);
+            
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Оформить заказ';
+        }
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', loadCart);
+</script>
+{% endblock %}

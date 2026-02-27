@@ -1,0 +1,16 @@
+# Django
+Django>=5.2.0
+djangorestframework>=3.15.0
+django-filter>=24.0
+
+# Telegram
+aiogram>=3.0.0
+
+# Database
+Pillow>=10.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# HTTP client
+aiohttp>=3.9.0

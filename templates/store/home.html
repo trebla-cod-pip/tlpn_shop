@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Главная - Tulipa{% endblock %}
+
+{% block content %}
+<div class="app-inner">
+    <!-- Header -->
+    <header class="hdr">
+        <div class="hdr-left">
+            <div class="brand-mark">T</div>
+            <div class="brand-name">Tulipa</div>
+        </div>
+        <div class="hdr-right">
+            <div class="icon-btn" onclick="navigateTo('/favorites/')">
+                <iconify-icon icon="lucide:heart" style="font-size: 20px; color: var(--foreground)"></iconify-icon>
+            </div>
+            <div class="icon-btn" onclick="navigateTo('/bag/')">
+                <iconify-icon icon="lucide:shopping-bag" style="font-size: 20px; color: var(--foreground)"></iconify-icon>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" style="padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
+        <div class="hero-text" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="hero-kicker" style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted-foreground); font-weight: 500;">
+                Премиум бутик тюльпанов
+            </div>
+            <h1 class="hero-title" style="font-size: 28px; font-weight: 400; line-height: 1.2; letter-spacing: -0.5px;">
+                Минималистичные букеты для светлого дома.
+            </h1>
+            <p class="hero-subtitle" style="font-size: 15px; line-height: 1.6; color: var(--muted-foreground);">
+                Свежие тюльпаны в скандинавском стиле с доставкой в день заказа.
+            </p>
+        </div>
+        <div class="hero-media" style="width: 100%; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
+            <img class="hero-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                 src="https://storage.googleapis.com/banani-generated-images/generated-images/fd632ab9-5d62-4d28-a72e-e57783a946fa.jpg" 
+                 alt="Избранный букет белых тюльпанов">
+        </div>
+    </section>
+
+    <!-- Category Chips -->
+    <div class="chip-row" id="category-chips" style="padding: 0 24px 8px; display: flex; gap: 8px; overflow-x: auto; flex-wrap: wrap;">
+        <div class="chip chip--active" style="padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border); font-size: 13px; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; cursor: pointer; background: var(--foreground); color: var(--background); border-color: var(--foreground);" data-category="">
+            Все
+        </div>
+        <!-- Категории будут загружены через JS -->
+    </div>
+
+    <!-- Products Section -->
+    <section class="section" style="padding: 16px 24px 8px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="section-title" style="font-size: 17px; font-weight: 500;">Избранные букеты</h2>
+            <span class="section-link" style="font-size: 13px; color: var(--muted-foreground); cursor: pointer;">Все</span>
+        </div>
+        
+        <!-- Loading state -->
+        <div id="products-loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <!-- Error state -->
+        <div id="products-error" class="error-message" style="display: none;">
+            Не удалось загрузить товары. Попробуйте снова.
+        </div>
+        
+        <!-- Products grid -->
+        <div class="product-grid" id="products-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; display: none;">
+            <!-- Товары будут загружены через JS -->
+        </div>
+    </section>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+        <a href="/" class="nav-item nav-item--active">
+            <iconify-icon icon="lucide:home" style="font-size: 22px;"></iconify-icon>
+            <span>Главная</span>
+        </a>
+        <a href="/favorites/" class="nav-item">
+            <iconify-icon icon="lucide:heart" style="font-size: 22px;"></iconify-icon>
+            <span>Избранное</span>
+        </a>
+        <a href="/bag/" class="nav-item">
+            <iconify-icon icon="lucide:shopping-bag" style="font-size: 22px;"></iconify-icon>
+            <span>Корзина</span>
+        </a>
+        <a href="/profile/" class="nav-item">
+            <iconify-icon icon="lucide:user" style="font-size: 22px;"></iconify-icon>
+            <span>Профиль</span>
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentCategory = '';
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    // Загрузка категорий
+    async function loadCategories() {
+        try {
+            const response = await apiRequest('/api/categories/');
+            const chipsContainer = document.getElementById('category-chips');
+            
+            // Русские названия для категорий
+            const categoryNames = {
+                'belye': 'Белые',
+                'pastel': 'Пастель',
+                'sezonnye': 'Сезонные',
+                'premium': 'Премиум'
+            };
+
+            response.forEach(category => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.style.cssText = 'padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border); font-size: 13px; font-weight: 500; color: var(--muted-foreground); white-space: nowrap; cursor: pointer;';
+                chip.textContent = categoryNames[category.slug] || category.name;
+                chip.dataset.category = category.slug;
+                chip.onclick = () => filterByCategory(category.slug, chip);
+                chipsContainer.appendChild(chip);
+            });
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    // Фильтрация по категории
+    function filterByCategory(slug, chipElement) {
+        currentCategory = slug;
+        
+        // Обновляем активный чип
+        document.querySelectorAll('.chip').forEach(c => {
+            c.classList.remove('chip--active');
+            c.style.background = '';
+            c.style.color = '';
+            c.style.borderColor = '';
+        });
+        chipElement.classList.add('chip--active');
+        chipElement.style.background = 'var(--foreground)';
+        chipElement.style.color = 'var(--background)';
+        chipElement.style.borderColor = 'var(--foreground)';
+        
+        loadProducts();
+    }
+
+    // Загрузка товаров
+    async function loadProducts() {
+        const loading = document.getElementById('products-loading');
+        const error = document.getElementById('products-error');
+        const grid = document.getElementById('products-grid');
+        
+        loading.style.display = 'flex';
+        error.style.display = 'none';
+        grid.style.display = 'none';
+        grid.innerHTML = '';
+        
+        try {
+            let url = '/api/products/?featured=true';
+            if (currentCategory) {
+                url = `/api/products/?category=${currentCategory}`;
+            }
+            
+            const products = await apiRequest(url);
+            
+            products.forEach(product => {
+                const card = createProductCard(product);
+                grid.appendChild(card);
+            });
+            
+            loading.style.display = 'none';
+            grid.style.display = 'grid';
+        } catch (error) {
+            console.error('Error loading products:', error);
+            loading.style.display = 'none';
+            error.style.display = 'block';
+        }
+    }
+
+    // Создание карточки товара
+    function createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.style.cssText = 'background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 8px; cursor: pointer;';
+        card.onclick = () => navigateTo(`/item/${product.slug}/`);
+        
+        const tagHtml = product.tags_list?.length ? 
+            `<span class="product-tag" style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-xl); background: var(--secondary); color: var(--secondary-foreground);">${product.tags_list[0]}</span>` : '';
+        
+        card.innerHTML = `
+            <div class="product-media" style="width: 100%; aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; background: var(--muted);">
+                <img class="product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                     src="${product.image || 'https://via.placeholder.com/300x400'}" 
+                     alt="${product.name}">
+            </div>
+            <div class="product-name" style="font-size: 14px; font-weight: 500; line-height: 1.3;">${product.name}</div>
+            <div class="product-meta" style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="product-price" style="font-size: 14px; font-weight: 500;">${product.price} ₽</span>
+                ${tagHtml}
+            </div>
+        `;
+        
+        return card;
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCategories();
+        loadProducts();
+        
+        // Обновляем иконку корзины
+        updateCartIcon();
+    });
+
+    function updateCartIcon() {
+        const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        if (cartCount > 0) {
+            // Можно добавить бейдж с количеством
+        }
+    }
+</script>
+{% endblock %}
