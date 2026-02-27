@@ -32,6 +32,19 @@ echo [INFO] Python: %PYTHON_CMD%
 %PYTHON_CMD% --version
 echo.
 
+REM Sozdaniye/aktivatsiya venv
+if not exist "venv" (
+    echo [INFO] Sozdaniye virtual'nogo okruzheniya...
+    %PYTHON_CMD% -m venv venv
+    echo [OK] Virtual'noye okruzheniye sozdano
+    echo.
+)
+
+echo [INFO] Aktivatsiya virtual'nogo okruzheniya...
+call venv\Scripts\activate.bat
+echo [OK] Aktivirovano: %VIRTUAL_ENV%
+echo.
+
 REM Обработка аргументов
 if "%ARG%"=="--help" goto help
 if "%ARG%"=="--clean" goto clean
@@ -64,17 +77,17 @@ goto full_after_clean
 
 :full
 echo [INFO] Ustanovka zavisimostey...
-%PYTHON_CMD% -m pip install -q -r requirements.txt
+venv\Scripts\pip install -q -r requirements.txt
 echo [OK] Zavisimosti ustanovleny
 echo.
 
 echo [INFO] Primeneniye migratsiy...
-%PYTHON_CMD% manage.py migrate
+venv\Scripts\python manage.py migrate
 echo [OK] Migratsii primeneny
 echo.
 
 echo [INFO] Zapolneniye testovymi dannymi...
-%PYTHON_CMD% manage.py shell ^< create_test_data.py
+venv\Scripts\python manage.py shell ^< create_test_data.py
 echo [OK] Testovyye dannyye sozdany
 echo.
 
@@ -82,22 +95,22 @@ goto runserver
 
 :full_after_clean
 echo [INFO] Ustanovka zavisimostey...
-%PYTHON_CMD% -m pip install -q -r requirements.txt
+venv\Scripts\pip install -q -r requirements.txt
 echo [OK] Zavisimosti ustanovleny
 echo.
 
 echo [INFO] Primeneniye migratsiy...
-%PYTHON_CMD% manage.py migrate
+venv\Scripts\python manage.py migrate
 echo [OK] Migratsii primeneny
 echo.
 
 echo [INFO] Sozdaniye super'pol'zovatelya...
-%PYTHON_CMD% manage.py createsuperuser
+venv\Scripts\python manage.py createsuperuser
 echo [OK] Super'pol'zovatel' sozdan
 echo.
 
 echo [INFO] Zapolneniye testovymi dannymi...
-%PYTHON_CMD% manage.py shell ^< create_test_data.py
+venv\Scripts\python manage.py shell ^< create_test_data.py
 echo [OK] Testovyye dannyye sozdany
 echo.
 
@@ -105,19 +118,19 @@ goto runserver
 
 :migrate
 echo [INFO] Primeneniye migratsiy...
-%PYTHON_CMD% manage.py migrate
+venv\Scripts\python manage.py migrate
 echo [OK] Migratsii primeneny
 exit /b 0
 
 :data
 echo [INFO] Zapolneniye testovymi dannymi...
-%PYTHON_CMD% manage.py shell ^< create_test_data.py
+venv\Scripts\python manage.py shell ^< create_test_data.py
 echo [OK] Testovyye dannyye sozdany
 exit /b 0
 
 :nodata
 echo [INFO] Primeneniye migratsiy...
-%PYTHON_CMD% manage.py migrate
+venv\Scripts\python manage.py migrate
 echo [OK] Migratsii primeneny
 goto runserver
 
@@ -130,4 +143,4 @@ echo   - Admin panel':  http://localhost:8000/admin
 echo   - API:           http://localhost:8000/api/
 echo =================================================
 echo.
-%PYTHON_CMD% manage.py runserver
+venv\Scripts\python manage.py runserver

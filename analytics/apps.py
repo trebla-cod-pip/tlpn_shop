@@ -1,5 +1,5 @@
 from django.contrib.admin import AdminSite
-from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 
 # Добавляем ссылку на дашборд в навигацию админки
@@ -13,8 +13,6 @@ def custom_each_context(self, request):
 AdminSite.each_context = custom_each_context
 
 # Добавляем кнопку в template
-from django.conf import settings
-
-ANALYTICS_DASHBOARD_LINK = format_html(
+ANALYTICS_DASHBOARD_LINK = mark_safe(
     '<a href="/analytics/dashboard-ui/" style="background:#417690;color:white;padding:10px 15px;border-radius:4px;text-decoration:none;margin-left:10px;">📊 Дашборд</a>'
 )
