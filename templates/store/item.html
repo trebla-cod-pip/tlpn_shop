@@ -8,11 +8,11 @@
     <!-- Header -->
     <header class="hdr" style="display: flex; justify-content: space-between; align-items: center; padding: 32px 32px 16px; flex-shrink: 0;">
         <div class="icn" onclick="window.history.back()" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <iconify-icon icon="lucide:arrow-left" style="font-size: 24px; color: var(--foreground)"></iconify-icon>
+            <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-arrow-left"></use></svg>
         </div>
         <div class="brand" style="font-size: 14px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; margin-left: 4px;">Tulipa</div>
         <div class="icn" onclick="navigateTo('/bag/')" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <iconify-icon icon="lucide:shopping-bag" style="font-size: 24px; color: var(--foreground)"></iconify-icon>
+            <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-shopping-bag"></use></svg>
         </div>
     </header>
 
@@ -45,11 +45,11 @@
                 <span class="lbl" style="font-size: 15px; font-weight: 500;">Количество</span>
                 <div class="qty" style="display: flex; align-items: center; gap: 24px;">
                     <div class="q-btn" id="btn-minus" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
-                        <iconify-icon icon="lucide:minus" style="font-size: 16px; color: var(--muted-foreground)"></iconify-icon>
+                        <svg class="icon" style="width: 16px; height: 16px;"><use href="#icon-minus"></use></svg>
                     </div>
                     <span id="quantity-value" class="q-val" style="font-size: 16px; font-weight: 500; min-width: 16px; text-align: center;">1</span>
                     <div class="q-btn" id="btn-plus" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
-                        <iconify-icon icon="lucide:plus" style="font-size: 16px; color: var(--foreground)"></iconify-icon>
+                        <svg class="icon" style="width: 16px; height: 16px;"><use href="#icon-plus"></use></svg>
                     </div>
                 </div>
             </div>

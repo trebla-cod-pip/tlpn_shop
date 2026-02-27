@@ -257,22 +257,6 @@
             loadDeferredScript('https://telegram.org/js/telegram-web-app.js', {
                 callback: initTelegramWebApp,
             });
-            
-            // Iconify - отложенная загрузка при первом взаимодействии
-            let iconifyLoaded = false;
-            function loadIconify() {
-                if (iconifyLoaded) return;
-                iconifyLoaded = true;
-                loadDeferredScript('https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js');
-            }
-            
-            // Триггеры для загрузки Iconify
-            ['click', 'scroll', 'touchstart'].forEach(event => {
-                window.addEventListener(event, loadIconify, { once: true, passive: true });
-            });
-            
-            // Загрузить через 3 секунды если не было взаимодействий
-            setTimeout(loadIconify, 3000);
         }
 
         window.dataLayer = window.dataLayer || [];
@@ -387,6 +371,25 @@
     </script>
 
     <noscript><div><img src="https://mc.yandex.ru/watch/107038425" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    
+    <!-- SVG Icons Sprite (Common) -->
+    <svg style="display: none;">
+        <symbol id="icon-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+        </symbol>
+        <symbol id="icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/>
+        </symbol>
+        <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14"/><path d="M5 12h14"/>
+        </symbol>
+    </svg>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
