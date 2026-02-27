@@ -121,7 +121,7 @@ setup_project() {
     fi
     
     # Статика
-    python manage.py collectstatic --noinput
+    STATIC_ROOT="${STATIC_ROOT:-/var/www/tlpn_shop/static}" python manage.py collectstatic --noinput
     success "Статические файлы собраны"
 }
 
@@ -189,7 +189,7 @@ EOF
         success "Template updated with local fonts"
     fi
 
-    python manage.py collectstatic --noinput
+    STATIC_ROOT="${STATIC_ROOT:-/var/www/tlpn_shop/static}" python manage.py collectstatic --noinput
     success "Local fonts configured"
 }
 # =============================================================================
@@ -541,4 +541,5 @@ main() {
 }
 
 main "$@"
+
 

@@ -141,7 +141,7 @@ collect_static() {
     info "Сбор статических файлов..."
     
     if [ -f "manage.py" ]; then
-        python manage.py collectstatic --noinput
+        STATIC_ROOT="${STATIC_ROOT:-/var/www/tlpn_shop/static}" python manage.py collectstatic --noinput
         success "Статические файлы собраны"
     else
         warning "manage.py не найден"
@@ -187,4 +187,5 @@ main() {
 }
 
 main "$@"
+
 

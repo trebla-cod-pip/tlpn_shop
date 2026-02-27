@@ -145,6 +145,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.getenv('STATIC_ROOT', str(BASE_DIR / 'staticfiles'))
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Media files (product images)
 MEDIA_URL = '/media/'
