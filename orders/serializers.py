@@ -29,6 +29,9 @@ class OrderCreateSerializer(serializers.Serializer):
     telegram_username = serializers.CharField(required=False, allow_blank=True)
     telegram_first_name = serializers.CharField(required=False, allow_blank=True)
     telegram_last_name = serializers.CharField(required=False, allow_blank=True)
+    
+    # Предпочтительный способ связи
+    preferred_contact_method = serializers.CharField(required=False, default='telegram')
 
     def validate_items(self, items):
         if not items:

@@ -23,7 +23,8 @@ class Order(models.Model):
     # Контактные данные
     phone = models.CharField(max_length=20, verbose_name='Телефон')
     email = models.EmailField(blank=True, verbose_name='Email')
-    
+    preferred_contact_method = models.CharField(max_length=20, default='telegram', verbose_name='Предпочтительный способ связи')
+
     # Доставка
     delivery_address = models.TextField(verbose_name='Адрес доставки')
     delivery_date = models.DateField(verbose_name='Дата доставки')

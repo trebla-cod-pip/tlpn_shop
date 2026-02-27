@@ -14,11 +14,13 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Load environment variables from .env.local first (for local dev), then .env
 BASE_DIR = Path(__file__).resolve().parent.parent
+local_env = BASE_DIR / '.env.local'
+if local_env.exists():
+    load_dotenv(local_env, override=True)
+else:
+    load_dotenv(override=True)
 
 
 # Quick-start development settings - unsuitable for production

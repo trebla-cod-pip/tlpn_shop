@@ -34,7 +34,7 @@
                     <span id="items-count">0 товаров</span>
                     <span id="total-amount">0 ₽</span>
                 </div>
-                <button class="checkout-btn" onclick="showCheckout()" style="width: 100%; padding: 18px; border: 1px solid var(--foreground); background: transparent; color: var(--foreground); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer;">
+                <button class="checkout-btn" onclick="showContactMethod()" style="width: 100%; padding: 18px; border: 1px solid var(--foreground); background: transparent; color: var(--foreground); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer;">
                     Оформить заказ
                 </button>
             </div>
@@ -56,59 +56,115 @@
     </nav>
 </div>
 
+<!-- Contact Method Modal -->
+<div id="contact-method-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
+    <div class="contact-method-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
+        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 12px;">Как с вами связаться?</h2>
+        <p style="color: var(--muted-foreground); font-size: 14px; margin-bottom: 24px;">Выберите удобный способ связи для подтверждения заказа</p>
+
+        <!-- Telegram Data Display -->
+        <div id="telegram-data" style="background: var(--input); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; display: none;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <iconify-icon icon="lucide:send" style="font-size: 20px; color: #229ED9;"></iconify-icon>
+                <span style="font-size: 14px; font-weight: 500;">Данные из Telegram</span>
+            </div>
+            <div id="tg-data-content" style="font-size: 13px; color: var(--muted-foreground);"></div>
+        </div>
+
+        <!-- Contact Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button id="btn-telegram" onclick="selectContactMethod('telegram')" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; border: 2px solid #229ED9; background: rgba(34, 158, 217, 0.08); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; color: #229ED9; cursor: pointer;">
+                <iconify-icon icon="lucide:send" style="font-size: 20px;"></iconify-icon>
+                <span>Через Telegram</span>
+            </button>
+            <button id="btn-phone" onclick="selectContactMethod('phone')" style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 16px; border: 2px solid var(--foreground); background: transparent; border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; color: var(--foreground); cursor: pointer;">
+                <iconify-icon icon="lucide:phone" style="font-size: 20px;"></iconify-icon>
+                <span>По телефону</span>
+            </button>
+        </div>
+
+        <!-- Phone Input (shown if no phone in TG) -->
+        <div id="phone-input-container" style="display: none; margin-top: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Введите номер телефона *</label>
+            <input type="tel" id="manual-phone" placeholder="+7 (999) 000-00-00"
+                   style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="button" onclick="hideContactMethod()" style="flex: 1; padding: 16px; border: 1px solid var(--border); background: transparent; border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: pointer;">
+                Отмена
+            </button>
+            <button type="button" id="contact-next-btn" onclick="proceedToCheckout()" disabled style="flex: 1; padding: 16px; border: none; background: var(--border); color: var(--muted-foreground); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: not-allowed;">
+                Далее
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Checkout Modal -->
 <div id="checkout-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
     <div class="checkout-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
-        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px;">Данные доставки</h2>
-        
+        <!-- Contact Method Summary -->
+        <div id="contact-summary" style="background: var(--input); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+            <iconify-icon id="contact-icon" icon="lucide:send" style="font-size: 24px; color: #229ED9;"></iconify-icon>
+            <div>
+                <div style="font-size: 12px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Способ связи</div>
+                <div id="contact-value" style="font-size: 15px; font-weight: 500;">Telegram</div>
+            </div>
+        </div>
+
+        <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px;">Доставка</h2>
+
         <form id="order-form" onsubmit="submitOrder(event)">
             <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div>
+                <!-- Phone (hidden if Telegram selected and phone available) -->
+                <div id="phone-field">
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Телефон *</label>
-                    <input type="tel" id="phone" name="phone" required placeholder="+7 (999) 000-00-00" 
-                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                    <input type="tel" id="phone" name="phone" required placeholder="+7 (999) 000-00-00"
+                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                 </div>
-                
+
+                <!-- Email (optional, auto-filled) -->
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Email</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" 
-                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                    <input type="email" id="email" name="email" placeholder="your@email.com"
+                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                 </div>
-                
+
+                <!-- Delivery Address -->
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Адрес доставки *</label>
-                    <textarea id="delivery_address" name="delivery_address" required rows="3" placeholder="Улица, дом, квартира..." 
-                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input); resize: none;"></textarea>
+                    <textarea id="delivery_address" name="delivery_address" required rows="2" placeholder="Улица, дом, квартира, подъезд, код..."
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background); resize: none;"></textarea>
                 </div>
-                
+
+                <!-- Delivery Date & Time -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div>
                         <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Дата доставки *</label>
-                        <input type="date" id="delivery_date" name="delivery_date" required 
-                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                        <input type="date" id="delivery_date" name="delivery_date" required
+                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Время доставки</label>
-                        <input type="text" id="delivery_time" name="delivery_time" placeholder="10:00-12:00" 
-                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input);">
+                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Время</label>
+                        <input type="text" id="delivery_time" name="delivery_time" placeholder="10:00-12:00"
+                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                     </div>
                 </div>
-                
+
+                <!-- Comment -->
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Комментарий</label>
-                    <textarea id="comment" name="comment" rows="2" placeholder="Пожелания к заказу..." 
-                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--input); resize: none;"></textarea>
+                    <textarea id="comment" name="comment" rows="2" placeholder="Пожелания к доставке, код домофона..."
+                              style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background); resize: none;"></textarea>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <button type="button" onclick="hideCheckout()" style="flex: 1; padding: 16px; border: 1px solid var(--border); background: transparent; border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: pointer;">
-                    Отмена
-                </button>
-                <button type="submit" id="submit-btn" style="flex: 1; padding: 16px; border: none; background: var(--foreground); color: var(--background); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; cursor: pointer;">
-                    Оформить заказ
-                </button>
-            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submit-btn" style="width: 100%; padding: 18px; margin-top: 24px; border: none; background: var(--foreground); color: var(--background); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer;">
+                Оформить заказ — <span id="btn-total">0</span>₽
+            </button>
         </form>
     </div>
 </div>
@@ -260,21 +316,199 @@
         localStorage.setItem('cart', JSON.stringify(cart));
     }
 
+    // Переменные для выбранного способа связи
+    let selectedContactMethod = null;
+
+    // Показать выбор способа связи
+    function showContactMethod() {
+        const modal = document.getElementById('contact-method-modal');
+        const tgDataDiv = document.getElementById('telegram-data');
+        const tgDataContent = document.getElementById('tg-data-content');
+        
+        // Сбрасываем состояние
+        selectedContactMethod = null;
+        document.getElementById('contact-next-btn').disabled = true;
+        document.getElementById('contact-next-btn').style.background = 'var(--border)';
+        document.getElementById('contact-next-btn').style.color = 'var(--muted-foreground)';
+        document.getElementById('contact-next-btn').style.cursor = 'not-allowed';
+        document.getElementById('phone-input-container').style.display = 'none';
+        document.getElementById('manual-phone').value = '';
+        
+        // Показываем данные из Telegram если есть
+        if (user.id) {
+            tgDataDiv.style.display = 'block';
+            const parts = [];
+            if (user.first_name || user.last_name) {
+                parts.push(`${user.first_name || ''} ${user.last_name || ''}`.trim());
+            }
+            if (user.username) {
+                parts.push(`@${user.username}`);
+            }
+            if (user.phone) {
+                parts.push(user.phone);
+            }
+            tgDataContent.innerHTML = parts.length > 0 
+                ? parts.map(p => `<div>• ${p}</div>`).join('')
+                : '<div>• ID: ' + user.id + '</div>';
+        } else {
+            tgDataDiv.style.display = 'none';
+        }
+        
+        modal.style.display = 'flex';
+        
+        // Haptic feedback
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    // Скрыть выбор способа связи
+    function hideContactMethod() {
+        document.getElementById('contact-method-modal').style.display = 'none';
+    }
+
+    // Выбор способа связи
+    function selectContactMethod(method) {
+        selectedContactMethod = method;
+        const btnTelegram = document.getElementById('btn-telegram');
+        const btnPhone = document.getElementById('btn-phone');
+        const phoneInputContainer = document.getElementById('phone-input-container');
+        const nextBtn = document.getElementById('contact-next-btn');
+        
+        // Сбрасываем стили кнопок
+        btnTelegram.style.background = 'rgba(34, 158, 217, 0.08)';
+        btnTelegram.style.borderColor = '#229ED9';
+        btnTelegram.style.color = '#229ED9';
+        btnPhone.style.background = 'transparent';
+        btnPhone.style.borderColor = 'var(--foreground)';
+        btnPhone.style.color = 'var(--foreground)';
+        
+        // Активная кнопка
+        if (method === 'telegram') {
+            btnTelegram.style.background = '#229ED9';
+            btnTelegram.style.color = 'white';
+            phoneInputContainer.style.display = 'none';
+        } else {
+            btnPhone.style.background = 'var(--foreground)';
+            btnPhone.style.color = 'var(--background)';
+            phoneInputContainer.style.display = 'block';
+        }
+        
+        // Активируем кнопку "Далее"
+        nextBtn.disabled = false;
+        nextBtn.style.background = 'var(--foreground)';
+        nextBtn.style.color = 'var(--background)';
+        nextBtn.style.cursor = 'pointer';
+        
+        // Haptic feedback
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    // Переход к оформлению
+    function proceedToCheckout() {
+        if (!selectedContactMethod) return;
+
+        // Если выбран телефон и нет его в Telegram, проверяем ввод
+        if (selectedContactMethod === 'phone') {
+            const manualPhone = document.getElementById('manual-phone');
+            if (!user.phone && !manualPhone.value.trim()) {
+                manualPhone.style.borderColor = 'red';
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+                }
+                return;
+            }
+            manualPhone.style.borderColor = 'var(--border)';
+        }
+
+        hideContactMethod();
+        showCheckout();
+    }
+
     // Показать форму оформления
     function showCheckout() {
-        document.getElementById('checkout-modal').style.display = 'flex';
+        const modal = document.getElementById('checkout-modal');
+        const contactSummary = document.getElementById('contact-summary');
+        const contactIcon = document.getElementById('contact-icon');
+        const contactValue = document.getElementById('contact-value');
+        const phoneField = document.getElementById('phone-field');
+        const phoneInput = document.getElementById('phone');
 
-        // Устанавливаем минимальную дату - сегодня
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('delivery_date').setAttribute('min', today);
-
-        // Заполняем данные из Telegram
-        fillCheckoutForm();
+        // Устанавливаем минимальную дату - сегодня + 1 день
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const minDate = tomorrow.toISOString().split('T')[0];
+        document.getElementById('delivery_date').setAttribute('min', minDate);
         
+        // Предлагаем завтрашнюю дату по умолчанию
+        document.getElementById('delivery_date').value = minDate;
+
+        // Настраиваем отображение способа связи
+        if (selectedContactMethod === 'telegram') {
+            contactIcon.setAttribute('icon', 'lucide:send');
+            contactIcon.style.color = '#229ED9';
+            contactValue.textContent = user.username 
+                ? `@${user.username}` 
+                : `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram';
+            
+            // Скрываем поле телефона если есть данные в Telegram
+            if (user.phone) {
+                phoneField.style.display = 'none';
+                phoneInput.removeAttribute('required');
+            } else {
+                phoneField.style.display = 'block';
+                phoneInput.setAttribute('required', 'required');
+            }
+        } else {
+            contactIcon.setAttribute('icon', 'lucide:phone');
+            contactIcon.style.color = '#22c55e';
+            
+            // Показываем номер телефона
+            const phoneValue = user.phone || document.getElementById('manual-phone')?.value || 'По телефону';
+            contactValue.textContent = phoneValue;
+            
+            phoneField.style.display = 'block';
+            phoneInput.setAttribute('required', 'required');
+        }
+
+        // Автозаполнение полей
+        fillCheckoutForm();
+
+        // Устанавливаем телефон
+        if (user.phone) {
+            phoneInput.value = user.phone;
+        } else if (selectedContactMethod === 'phone') {
+            const manualPhone = document.getElementById('manual-phone');
+            if (manualPhone?.value) {
+                phoneInput.value = manualPhone.value;
+            }
+        }
+
+        // Email автозаполнение
+        const emailInput = document.getElementById('email');
+        if (!emailInput.value && user.username) {
+            emailInput.value = `${user.username}@telegram.com`;
+        }
+
+        // Время доставки - предлагаем "В течение дня"
+        document.getElementById('delivery_time').value = 'В течение дня';
+
+        // Обновляем сумму в кнопке
+        document.getElementById('btn-total').textContent = Math.round(total);
+
+        modal.style.display = 'flex';
+
+        // Haptic feedback
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+
         // Показываем Telegram MainButton
         if (window.Telegram?.WebApp?.MainButton) {
             const tg = window.Telegram.WebApp;
-            tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
+            tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${Math.round(total)}₽`);
             tg.MainButton.show();
             tg.MainButton.onClick(submitOrderFromMainButton);
         }
@@ -303,17 +537,26 @@
     // Отправка заказа
     async function submitOrder(event) {
         event.preventDefault();
-        
+
         const submitBtn = document.getElementById('submit-btn');
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Обработка...';
+        submitBtn.textContent = 'Отправка...';
+
+        // Определяем предпочтительный способ связи
+        let preferredContact = selectedContactMethod || 'telegram';
         
+        // Получаем телефон с учётом видимости поля
+        let phoneValue = document.getElementById('phone').value;
+        if (selectedContactMethod === 'telegram' && user.phone) {
+            phoneValue = user.phone;
+        }
+
         const orderData = {
             items: cart.map(item => ({
                 product_id: item.id,
                 quantity: item.quantity
             })),
-            phone: document.getElementById('phone').value,
+            phone: phoneValue,
             email: document.getElementById('email').value,
             delivery_address: document.getElementById('delivery_address').value,
             delivery_date: document.getElementById('delivery_date').value,
@@ -322,9 +565,10 @@
             telegram_user_id: user?.id,
             telegram_username: user?.username,
             telegram_first_name: user?.first_name,
-            telegram_last_name: user?.last_name
+            telegram_last_name: user?.last_name,
+            preferred_contact_method: preferredContact
         };
-        
+
         try {
             const response = await fetch('/api/orders/', {
                 method: 'POST',
@@ -333,36 +577,52 @@
                 },
                 body: JSON.stringify(orderData)
             });
-            
+
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || 'Не удалось создать заказ');
             }
-            
+
             const order = await response.json();
-            
+
             // Очищаем корзину
             localStorage.removeItem('cart');
-            
+
             // Haptic feedback
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
-            
-            // Показываем подтверждение
-            alert(`Заказ #${order.id} создан!\nМы свяжемся с вами в ближайшее время.`);
-            
-            // Перенаправляем на главную
-            window.location.href = '/';
-            
+
+            // Скрываем MainButton
+            if (window.Telegram?.WebApp?.MainButton) {
+                const tg = window.Telegram.WebApp;
+                tg.MainButton.hide();
+                tg.MainButton.offClick(submitOrderFromMainButton);
+            }
+
+            // Закрываем модальные окна
+            hideCheckout();
+            hideContactMethod();
+
+            // Закрываем TMA через 1.5 секунды (уведомления отправляются на бэкенде)
+            setTimeout(() => {
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.close();
+                }
+                // Если не в TMA, перенаправляем на страницу успеха
+                if (!window.Telegram?.WebApp) {
+                    window.location.href = `/order-success/?order_id=${order.id}`;
+                }
+            }, 1500);
+
         } catch (error) {
             console.error('Error creating order:', error);
             alert(`Ошибка: ${error.message}`);
-            
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('error');
+
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
-        } finally {
+            
             submitBtn.disabled = false;
             submitBtn.textContent = 'Оформить заказ';
         }

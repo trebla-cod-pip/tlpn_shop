@@ -3,6 +3,11 @@
 
 {% block title %}Главная - Tulipa{% endblock %}
 
+{% block extra_head %}
+<!-- Preload hero image -->
+<link rel="preload" as="image" href="/media/products/homepage.webp" type="image/webp" fetchpriority="high">
+{% endblock %}
+
 {% block extra_css %}
 <link rel="preload" as="image" href="/media/products/homepage.webp" type="image/webp">
 {% endblock %}

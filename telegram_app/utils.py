@@ -49,10 +49,31 @@ async def send_order_notification(order) -> bool:
     """
     Отправляет уведомление о заказе пользователю и админу
     """
+    from analytics.models import TrackingEvent
+    
     # Формируем список товаров
     items_text = ""
     for item in order.items.all():
         items_text += f"• {item.product.name} x {item.quantity} — {item.total}₽\n"
+
+    # Иконка способа связи
+    contact_icon = "📱" if order.preferred_contact_method == 'phone' else "✈️"
+    
+    # Формируем текст способа связи с учётом краевых случаев
+    if order.preferred_contact_method == 'phone':
+        contact_text = f"Телефон: {order.phone}"
+    else:
+        if order.telegram_username:
+            contact_text = f"Telegram: @{order.telegram_username}"
+        elif order.telegram_first_name:
+            contact_text = f"Telegram: {order.telegram_first_name} {order.telegram_last_name or ''}"
+        else:
+            contact_text = f"Telegram (ID: {order.telegram_user_id})"
+
+    # Имя клиента
+    client_name = f"{order.telegram_first_name or ''} {order.telegram_last_name or ''}".strip()
+    if not client_name:
+        client_name = f"Telegram @{order.telegram_username}" if order.telegram_username else f"Пользователь #{order.telegram_user_id}"
 
     # Сообщение пользователю
     user_message = f"""
@@ -71,6 +92,7 @@ async def send_order_notification(order) -> bool:
 
 📞 <b>Контакты:</b>
 {order.phone}
+{contact_icon} <b>Предпочтительный способ связи:</b> {contact_text}
 
 Мы свяжемся с вами для подтверждения доставки.
     """.strip()
@@ -80,9 +102,9 @@ async def send_order_notification(order) -> bool:
 🔔 <b>Новый заказ #{order.id}!</b>
 
 👤 <b>Клиент:</b>
-• Telegram: @{order.telegram_username or 'нет'}
-• Имя: {order.telegram_first_name or ''} {order.telegram_last_name or ''}
+• {client_name}
 • Телефон: {order.phone}
+• <b>Предпочтительный способ связи:</b> {contact_text}
 
 📦 <b>Заказ:</b>
 {items_text}
@@ -99,17 +121,38 @@ async def send_order_notification(order) -> bool:
 <a href='http://localhost:8000/admin/orders/order/{order.id}/change/'>Открыть в админке</a>
     """.strip()
 
-    # Отправляем пользователю
-    user_sent = await send_telegram_message(order.telegram_user_id, user_message)
-    
+    # Отправляем пользователю (если есть telegram_user_id)
+    user_sent = False
+    if order.telegram_user_id:
+        try:
+            user_sent = await send_telegram_message(order.telegram_user_id, user_message)
+        except Exception as e:
+            logger.error(f"Ошибка отправки пользователю #{order.telegram_user_id}: {e}")
+
     # Отправляем админу
     admin_sent = False
     if settings.TELEGRAM_ADMIN_ID:
-        admin_sent = await send_telegram_message(
-            int(settings.TELEGRAM_ADMIN_ID), 
-            admin_message
+        try:
+            admin_sent = await send_telegram_message(
+                int(settings.TELEGRAM_ADMIN_ID),
+                admin_message
+            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки админу: {e}")
+
+    # Трекаем событие purchase для аналитики
+    try:
+        TrackingEvent.objects.create(
+            event_type='purchase',
+            event_data={
+                'order_id': order.id,
+                'total_amount': str(order.total_amount),
+                'items_count': order.get_items_count()
+            }
         )
-    
+    except Exception as e:
+        logger.error(f"Ошибка трекинга purchase: {e}")
+
     return user_sent and admin_sent
 
 

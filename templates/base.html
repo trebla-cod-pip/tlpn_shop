@@ -253,13 +253,27 @@
         }
 
         function initExternalScripts() {
+            // Telegram WebApp - загружаем сразу для Mini App
             loadDeferredScript('https://telegram.org/js/telegram-web-app.js', {
                 callback: initTelegramWebApp,
             });
-            loadDeferredScript('https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js');
+            
+            // Iconify - отложенная загрузка при первом взаимодействии
+            let iconifyLoaded = false;
+            function loadIconify() {
+                if (iconifyLoaded) return;
+                iconifyLoaded = true;
+                loadDeferredScript('https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js');
+            }
+            
+            // Триггеры для загрузки Iconify
+            ['click', 'scroll', 'touchstart'].forEach(event => {
+                window.addEventListener(event, loadIconify, { once: true, passive: true });
+            });
+            
+            // Загрузить через 3 секунды если не было взаимодействий
+            setTimeout(loadIconify, 3000);
         }
-
-        document.addEventListener('DOMContentLoaded', initExternalScripts);
 
         window.dataLayer = window.dataLayer || [];
 
