@@ -1,6 +1,8 @@
 # Tulpin Shop - Production Setup Guide
 
-## 📋 Быстрый старт (локальная разработка)
+## 📋 Быстрый старт
+
+### Локальная разработка (Windows/Linux/Mac)
 
 ```bash
 # Запуск проекта (миграции + данные + сервер)
@@ -18,49 +20,34 @@ start.bat
 
 ---
 
-## 🚀 Production развёртывание (Nginx + SSL)
+## 🚀 Production развёртывание (сервер)
 
 ### Требования
 - Сервер с Ubuntu/Debian
 - Домен `tlpn.shop` с A-записью на IP сервера
 - Root доступ
 
-### Автоматическое развёртывание
+### Автоматическая настройка (всё в одном)
 
 ```bash
-# Полное развёртывание (Gunicorn + Nginx + SSL)
-sudo ./deploy.sh
+# Полная настройка: система + проект + шрифты + SSL + Nginx
+sudo ./setup.sh
 ```
 
-### Пошаговая настройка
-
-#### 1. Настройка Nginx + SSL (без развёртывания)
+### Отдельные режимы
 
 ```bash
-# Полная настройка
-sudo ./setup_ssl.sh
+# Только локальный запуск (dev)
+sudo ./setup.sh --dev
 
-# Тестовый режим (staging сертификаты)
-sudo ./setup_ssl.sh --dry-run
+# Только SSL сертификаты
+sudo ./setup.sh --ssl-only
 
-# Обновление SSL
-sudo ./setup_ssl.sh --renew
-```
+# Только шрифты
+sudo ./setup.sh --fonts
 
-#### 2. Ручная настройка
-
-```bash
-# 1. Скопировать конфиг Nginx
-sudo cp nginx.conf /etc/nginx/sites-available/tlpn_shop
-sudo ln -sf /etc/nginx/sites-available/tlpn_shop /etc/nginx/sites-enabled/tlpn_shop
-sudo rm -f /etc/nginx/sites-enabled/default
-
-# 2. Получить SSL сертификат
-sudo certbot --nginx -d tlpn.shop -d www.tlpn.shop --email admin@tlpn.shop
-
-# 3. Проверить и перезапустить Nginx
-sudo nginx -t
-sudo systemctl reload nginx
+# Справка
+sudo ./setup.sh --help
 ```
 
 ---
@@ -69,15 +56,16 @@ sudo systemctl reload nginx
 
 ```
 tulpin/
+├── setup.sh              # Production настройка (всё в одном)
 ├── start.sh              # Локальный запуск (dev)
 ├── start.bat             # Локальный запуск (Windows)
-├── setup_ssl.sh          # Настройка SSL через Let's Encrypt
-├── setup_fonts.sh        # Скачивание и установка шрифтов
-├── deploy.sh             # Production развёртывание
 ├── nginx.conf            # Конфигурация Nginx
+├── setup_fonts.sh        # Отдельная настройка шрифтов
+├── setup_ssl.sh          # Отдельная настройка SSL
+├── deploy.sh             # Старый deploy скрипт
 ├── create_superuser.py   # Скрипт создания админа
 ├── create_test_data.py   # Тестовые данные
-└── .env.production       # Production настройки (создаётся автоматически)
+└── .env.production       # Production настройки
 ```
 
 ---
@@ -86,11 +74,11 @@ tulpin/
 
 Проект использует шрифт **Inter** (Google Fonts).
 
-### Локальная установка шрифтов (для production)
+### Локальная установка (для production)
 
 ```bash
 # Скачать и установить шрифты
-./setup_fonts.sh
+sudo ./setup.sh --fonts
 ```
 
 Это:
@@ -117,7 +105,7 @@ tulpin/
 sudo nginx -t                    # Проверить конфиг
 sudo systemctl status nginx      # Статус
 sudo systemctl restart nginx     # Перезапуск
-sudo tail -f /var/log/nginx/tlpn_shop_error.log  # Логи
+sudo tail -f /var/log/nginx/tlpn_shop_error.log  # Логи ошибок
 ```
 
 ### SSL сертификаты
@@ -127,12 +115,28 @@ sudo certbot renew               # Обновить SSL
 sudo certbot renew --dry-run     # Тест обновления
 ```
 
-### Gunicorn (production)
+### Gunicorn (Django приложение)
 ```bash
 sudo systemctl status tulpin_shop    # Статус
 sudo systemctl restart tulpin_shop   # Перезапуск
+sudo systemctl stop tulpin_shop      # Остановить
 sudo journalctl -u tulpin_shop -f    # Логи
 ```
+
+---
+
+## 📦 Последовательность развёртывания
+
+Скрипт `setup.sh` выполняет шаги в правильном порядке:
+
+1. **Проверки** → root доступ, Python, домен
+2. **Система** → установка зависимостей (nginx, certbot, python)
+3. **Проект** → venv, зависимости, миграции, суперпользователь, тестовые данные
+4. **Шрифты** → скачивание Inter, создание CSS
+5. **Gunicorn** → systemd сервис для Django
+6. **SSL** → получение сертификата Let's Encrypt
+7. **Nginx** → настройка прокси + SSL
+8. **Production env** → создание `.env.production`
 
 ---
 
@@ -152,6 +156,49 @@ sudo journalctl -u tulpin_shop -f    # Логи
 
 ---
 
+## 🆘 Troubleshooting
+
+### Ошибка 502 Bad Gateway
+```bash
+# Проверьте Gunicorn
+sudo systemctl status tulpin_shop
+sudo journalctl -u tulpin_shop -n 50
+
+# Перезапустите
+sudo systemctl restart tulpin_shop
+```
+
+### SSL не работает
+```bash
+# Проверьте сертификаты
+sudo certbot certificates
+
+# Пересоздайте
+sudo certbot delete --cert-name tlpn.shop
+sudo ./setup.sh --ssl-only
+```
+
+### Nginx не запускается
+```bash
+sudo nginx -t
+sudo systemctl status nginx
+sudo journalctl -u nginx -n 50
+```
+
+### Ошибка при получении SSL
+```bash
+# Проверьте, что домен указывает на сервер
+dig tlpn.shop
+
+# Проверьте, что порт 80 открыт
+sudo ufw status | grep 80
+
+# Запустите в тестовом режиме
+sudo certbot certonly --staging --webroot -w /var/www/certbot -d tlpn.shop
+```
+
+---
+
 ## 📊 Мониторинг
 
 Проверка доступности:
@@ -163,32 +210,5 @@ curl -I https://tlpn.shop/health/
 Проверка SSL:
 ```bash
 curl -vI https://tlpn.shop 2>&1 | grep SSL
-```
-
----
-
-## 🆘 Troubleshooting
-
-### Ошибка 502 Bad Gateway
-```bash
-# Проверьте Gunicorn
-sudo systemctl status tulpin_shop
-sudo journalctl -u tulpin_shop -n 50
-```
-
-### SSL не работает
-```bash
-# Проверьте сертификаты
-sudo certbot certificates
-
-# Пересоздайте
-sudo certbot delete --cert-name tlpn.shop
-sudo certbot --nginx -d tlpn.shop -d www.tlpn.shop
-```
-
-### Nginx не запускается
-```bash
-sudo nginx -t
-sudo systemctl status nginx
-sudo journalctl -u nginx -n 50
+openssl s_client -connect tlpn.shop:443 -servername tlpn.shop
 ```

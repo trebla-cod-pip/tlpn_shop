@@ -88,17 +88,28 @@ setup_nginx_config() {
     mkdir -p /etc/nginx/sites-available
     mkdir -p /etc/nginx/sites-enabled
     
-    # Копируем конфиг
-    cp "$PROJECT_ROOT/nginx.conf" "$NGINX_CONF"
-    
-    # Обновляем путь к статике в конфиге
-    sed -i "s|alias /root/tlpn_shop/staticfiles/|alias $PROJECT_ROOT/staticfiles/|g" "$NGINX_CONF"
-    sed -i "s|alias /root/tlpn_shop/media/|alias $PROJECT_ROOT/media/|g" "$NGINX_CONF"
+    # Создаём временный конфиг БЕЗ SSL для получения сертификата
+    cat > "$NGINX_CONF" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    # Для Let's Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Временное перенаправление
+    location / {
+        return 301 https://\$server_name\$request_uri;
+    }
+}
+EOF
     
     # Создаём симлинк если нет
     if [ ! -L "$NGINX_LINK" ]; then
         ln -sf "$NGINX_CONF" "$NGINX_LINK"
-        success "Конфигурация Nginx создана"
+        success "Конфигурация Nginx создана (HTTP режим)"
     else
         success "Конфигурация Nginx уже существует"
     fi
