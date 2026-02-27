@@ -4,9 +4,30 @@ from rest_framework import serializers
 from store.models import Category, Product
 
 
+def _image_exists(image_field):
+    """Return False if the source image file is missing."""
+    if not image_field or not getattr(image_field, 'name', None):
+        return False
+    try:
+        with image_field.storage.open(image_field.name):
+            pass
+    except (FileNotFoundError, OSError):
+        return False
+    return True
+
+
 def _webp_url(obj, attr):
+    # Ensure source image exists before triggering ImageKit.
+    if not _image_exists(getattr(obj, 'image', None)):
+        return None
+
     spec = getattr(obj, attr, None)
-    return spec.url if getattr(spec, 'url', None) else None
+    if spec is None:
+        return None
+    try:
+        return spec.url
+    except (FileNotFoundError, OSError):
+        return None
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -83,4 +104,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             category=obj.category,
             is_active=True
         ).exclude(id=obj.id)[:4]
-        return ProductListSerializer(related, many=True).data
+        data = ProductListSerializer(related, many=True).data
+        return data
+
+    def get_image_webp_400(self, obj):
+        return _webp_url(obj, 'image_webp_400')
+
+    def get_image_webp_800(self, obj):
+        return _webp_url(obj, 'image_webp_800')
