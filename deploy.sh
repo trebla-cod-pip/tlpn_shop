@@ -136,8 +136,10 @@ Group=$APP_GROUP
 WorkingDirectory=$PROJECT_ROOT
 RuntimeDirectory=tulpin_shop
 RuntimeDirectoryMode=0755
-UMask=0007
+UMask=0022
 Environment=PYTHONUNBUFFERED=1
+Environment=MEDIA_ROOT=$MEDIA_ROOT
+Environment=STATIC_ROOT=$STATIC_ROOT
 ExecStart=$PROJECT_ROOT/venv/bin/gunicorn \\
     --access-logfile - \\
     --workers 3 \\
