@@ -40,7 +40,7 @@ def bag(request):
         'cart_currency': cart_currency,
         'cart_total': cart_total,
     }
-    return render(request, 'store/cart_detail.html', context)
+    return render(request, 'store/bag.html', context)
 
 
 def order_success(request):
