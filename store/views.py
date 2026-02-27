@@ -53,6 +53,8 @@ def order_success(request):
         order = get_object_or_404(Order, pk=request.session.get('last_order_id'))
 
     order_data = OrderSerializer(order).data if order else {}
+    if order_data:
+        order_data['total_amount'] = float(order_data.get('total_amount') or 0)
     # Добавим категорию в каждый элемент
     for item in order_data.get('items', []):
         item.setdefault('category', 'Тюльпаны')
