@@ -133,10 +133,15 @@ class AnalyticsMiddleware:
         return session
     
     def _extract_utm_params(self, request):
-        """РР·РІР»РµРєР°РµС‚ UTM-РїР°СЂР°РјРµС‚СЂС‹ РёР· Р·Р°РїСЂРѕСЃР°"""
+        """Извлекает UTM-параметры из запроса"""
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        # Определяем если пользователь из Telegram Mini App
+        is_telegram = 'Telegram' in user_agent
+        
         return {
-            'utm_source': request.GET.get('utm_source', ''),
-            'utm_medium': request.GET.get('utm_medium', ''),
+            'utm_source': request.GET.get('utm_source', '') or ('telegram' if is_telegram else ''),
+            'utm_medium': request.GET.get('utm_medium', '') or ('mini_app' if is_telegram else ''),
             'utm_campaign': request.GET.get('utm_campaign', ''),
             'utm_term': request.GET.get('utm_term', ''),
             'utm_content': request.GET.get('utm_content', ''),
