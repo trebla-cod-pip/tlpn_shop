@@ -29,18 +29,9 @@ def item(request, slug):
 
 def bag(request):
     """Корзина"""
-    cart_items = request.session.get('cart_items', [])
-    cart_currency = request.session.get('cart_currency', 'RUB')
-    cart_total = sum(
-        (item.get('price', 0) or 0) * (item.get('quantity', 1) or 1)
-        for item in cart_items
-    )
-    context = {
-        'cart_items': cart_items,
-        'cart_currency': cart_currency,
-        'cart_total': cart_total,
-    }
-    return render(request, 'store/bag.html', context)
+    # Корзина хранится в localStorage на клиенте
+    # Session используется только для аналитики
+    return render(request, 'store/bag.html')
 
 
 def order_success(request):

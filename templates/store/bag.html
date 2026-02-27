@@ -4,7 +4,6 @@
 {% block title %}Корзина - Tulipa{% endblock %}
 
 {% block content %}
-<script id="cart-init-data" type="application/json">{{ cart_items|default:"[]"|safe }}</script>
 <div class="app" style="min-height: 100vh; background: var(--background); color: var(--foreground); display: flex; flex-direction: column;">
     <div class="app-inner" style="flex: 1; display: flex; flex-direction: column;">
         <!-- Header -->
@@ -119,17 +118,11 @@
 <script>
     let cart = [];
     let total = 0;
-    const serverCartElement = document.getElementById('cart-init-data');
-    const serverCart = serverCartElement ? JSON.parse(serverCartElement.textContent || '[]') : [];
 
-    // Загрузка корзины
+    // Загрузка корзины из localStorage
     function loadCart() {
         const storedCart = localStorage.getItem('cart');
-        if (storedCart) {
-            cart = JSON.parse(storedCart);
-        } else {
-            cart = serverCart.slice();
-        }
+        cart = storedCart ? JSON.parse(storedCart) : [];
         renderCart();
     }
 
