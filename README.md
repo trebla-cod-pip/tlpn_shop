@@ -132,13 +132,92 @@ tulpin/
 - Просмотр и обработка заказов
 - Смена статусов заказов
 
-## 🔧 Production настройки
+## 🔧 Production развёртывание
 
-1. Установите `DEBUG = False`
-2. Настройте `ALLOWED_HOSTS`
-3. Используйте PostgreSQL вместо SQLite
-4. Настройте HTTPS для WebApp
-5. Используйте webhook для бота вместо polling
+### Автоматическое развёртывание (рекомендуется)
+
+Скрипт `deploy.sh` автоматически настроит всё:
+
+```bash
+# На сервере (Ubuntu/Debian)
+sudo ./deploy.sh
+```
+
+**Что делает скрипт:**
+1. Устанавливает системные зависимости (Python, Nginx, Certbot)
+2. Создаёт виртуальное окружение и устанавливает Python-зависимости
+3. Собирает статику в `/var/www/tlpn_shop/static/`
+4. Применяет миграции и создаёт суперпользователя
+5. Настраивает Gunicorn systemd сервис
+6. Настраивает Nginx с правильными путями
+7. Получает SSL сертификат Let's Encrypt (если нет)
+8. Настраивает автообновление SSL
+
+**Опции скрипта:**
+```bash
+./deploy.sh              # Полное развёртывание
+./deploy.sh --ssl-only   # Только SSL настройка
+./deploy.sh --status     # Показать статус сервисов
+./deploy.sh --help       # Справка
+```
+
+### Ручное развёртывание
+
+1. **Скопируйте проект на сервер:**
+```bash
+git clone <repository> /root/tlpn_shop
+cd /root/tlpn_shop
+```
+
+2. **Установите зависимости:**
+```bash
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv nginx certbot python3-certbot-nginx
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt gunicorn
+```
+
+3. **Настройте переменные окружения:**
+```bash
+# Создайте .env файл
+cat > .env << EOF
+DEBUG=False
+DJANGO_DEBUG=False
+ALLOWED_HOSTS=tlpn.shop,www.tlpn.shop
+SECRET_KEY=ваш-secret-key
+TELEGRAM_BOT_TOKEN=ваш-токен
+TELEGRAM_WEBAPP_URL=https://tlpn.shop
+EOF
+```
+
+4. **Соберите статику:**
+```bash
+mkdir -p /var/www/tlpn_shop/static
+mkdir -p /var/www/tlpn_shop/media
+chown -R www-data:www-data /var/www/tlpn_shop
+
+export STATIC_ROOT=/var/www/tlpn_shop/static
+python manage.py collectstatic --noinput
+python manage.py migrate
+```
+
+5. **Настройте Gunicorn:**
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tulpin_shop
+sudo systemctl start tulpin_shop
+```
+
+6. **Настройте Nginx:**
+```bash
+sudo ln -sf /etc/nginx/sites-available/tlpn_shop /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+7. **Получите SSL сертификат:**
+```bash
+sudo certbot certonly --webroot -w /var/www/certbot -d tlpn.shop -d www.tlpn.shop
+```
 
 ## 📦 Зависимости
 

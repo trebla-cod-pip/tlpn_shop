@@ -1,9 +1,12 @@
+#!/bin/bash
 # =============================================================================
 # Tulpin Shop - Production Deployment Script
 # =============================================================================
 # Использование:
 #   ./deploy.sh              - полное развёртывание
 #   ./deploy.sh --ssl-only   - только SSL настройка
+#   ./deploy.sh --status     - показать статус
+#   ./deploy.sh --help       - эта справка
 # =============================================================================
 
 set -e
@@ -18,6 +21,9 @@ NC='\033[0m'
 # Переменные
 PROJECT_ROOT="/root/tlpn_shop"
 DOMAIN="tlpn.shop"
+STATIC_ROOT="/var/www/tlpn_shop/static"
+MEDIA_ROOT="/var/www/tlpn_shop/media"
+EMAIL="admin@$DOMAIN"
 
 info() { echo -e "${BLUE}>>> $1${NC}"; }
 success() { echo -e "${GREEN}✓ $1${NC}"; }
@@ -37,7 +43,7 @@ setup_system() {
     info "Обновление системы..."
     apt-get update -qq
     apt-get upgrade -y -qq
-    
+
     info "Установка системных зависимостей..."
     apt-get install -y -qq \
         python3 \
@@ -51,40 +57,65 @@ setup_system() {
         nginx \
         certbot \
         python3-certbot-nginx
-    
+
     success "Системные зависимости установлены"
+}
+
+# Создание директорий для статики и медиа
+setup_static_dirs() {
+    info "Создание директорий для статики и медиа..."
+    
+    mkdir -p "$STATIC_ROOT"
+    mkdir -p "$MEDIA_ROOT"
+    
+    # Даем права www-data для nginx
+    chown -R www-data:www-data /var/www/tlpn_shop
+    chmod -R 755 /var/www/tlpn_shop
+    
+    success "Директории созданы"
 }
 
 # Развёртывание проекта
 deploy_project() {
     info "Развёртывание проекта..."
-    
+
     cd "$PROJECT_ROOT"
-    
+
     # Создание venv если нет
     if [ ! -d "venv" ]; then
         python3 -m venv venv
         success "Виртуальное окружение создано"
     fi
-    
+
     # Активация и установка зависимостей
     source venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
     pip install gunicorn
     success "Python зависимости установлены"
-    
-    # Сбор статики
+
+    # Сбор статики в правильную директорию (через переменные окружения)
+    info "Сбор статических файлов..."
+    export STATIC_ROOT="$STATIC_ROOT"
+    export MEDIA_ROOT="$MEDIA_ROOT"
     python manage.py collectstatic --noinput
     success "Статические файлы собраны"
-    
+
+    # Копирование медиа файлов (если есть)
+    if [ -d "$PROJECT_ROOT/media" ] && [ "$(ls -A $PROJECT_ROOT/media 2>/dev/null)" ]; then
+        info "Копирование медиа файлов..."
+        cp -r "$PROJECT_ROOT/media/"* "$MEDIA_ROOT/"
+        chown -R www-data:www-data "$MEDIA_ROOT"
+        success "Медиа файлы скопированы"
+    fi
+
     # Миграции
     python manage.py migrate
     success "Миграции применены"
-    
+
     # Создание суперпользователя
     python manage.py shell < create_superuser.py
-    
+
     # Тестовые данные (опционально)
     if [ -f create_test_data.py ]; then
         python manage.py shell < create_test_data.py
@@ -125,14 +156,8 @@ EOF
 # Настройка Nginx
 setup_nginx() {
     info "Настройка Nginx..."
-    
-    # Копирование конфига
-    cp "$PROJECT_ROOT/nginx.conf" /etc/nginx/sites-available/tlpn_shop
-    
-    # Обновляем пути
-    sed -i "s|alias /root/tlpn_shop/|alias $PROJECT_ROOT/|g" /etc/nginx/sites-available/tlpn_shop
-    
-    # Обновляем upstream для Gunicorn
+
+    # Создаём конфиг с правильными путями
     cat > /etc/nginx/sites-available/tlpn_shop <<EOF
 upstream django_app {
     server unix:$PROJECT_ROOT/tulpin_shop.sock fail_timeout=0;
@@ -174,13 +199,13 @@ server {
     client_max_body_size 100M;
 
     location /static/ {
-        alias $PROJECT_ROOT/staticfiles/;
+        alias $STATIC_ROOT/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
 
     location /media/ {
-        alias $PROJECT_ROOT/media/;
+        alias $MEDIA_ROOT/;
         expires 7d;
         add_header Cache-Control "public";
     }
@@ -206,11 +231,11 @@ server {
     }
 }
 EOF
-    
+
     # Создаём симлинк
     ln -sf /etc/nginx/sites-available/tlpn_shop /etc/nginx/sites-enabled/tlpn_shop
     rm -f /etc/nginx/sites-enabled/default
-    
+
     # Проверка и перезапуск
     if nginx -t; then
         systemctl reload nginx
@@ -221,23 +246,36 @@ EOF
     fi
 }
 
-# Получение SSL сертификата
+# Проверка и получение SSL сертификата
 get_ssl() {
-    info "Получение SSL сертификата..."
-    
+    info "Проверка SSL сертификата..."
+
     # Создаём директорию для challenge
     mkdir -p /var/www/certbot
+
+    # Проверяем, существует ли сертификат
+    if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+        # Проверяем, не истекает ли сертификат (менее 30 дней)
+        if certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
+            EXPIRY=$(certbot certificates 2>/dev/null | grep "$DOMAIN" | awk '{print $NF}')
+            info "SSL сертификат уже существует (действует до: $EXPIRY)"
+            success "SSL сертификат найден"
+            return 0
+        fi
+    fi
+
+    info "Получение SSL сертификата..."
     
     certbot certonly \
         --webroot \
         -w /var/www/certbot \
         -d $DOMAIN \
         -d www.$DOMAIN \
-        --email admin@$DOMAIN \
+        --email $EMAIL \
         --agree-tos \
         --non-interactive \
         --force-renewal
-    
+
     if [ $? -eq 0 ]; then
         success "SSL сертификат получен"
         systemctl reload nginx
@@ -296,9 +334,9 @@ main() {
     echo "    TULPIN SHOP - Production Deployment"
     echo "================================================="
     echo ""
-    
+
     check_root
-    
+
     case "${1:-}" in
         --ssl-only)
             setup_nginx
@@ -314,6 +352,7 @@ main() {
             ;;
         "")
             setup_system
+            setup_static_dirs
             deploy_project
             setup_gunicorn
             setup_nginx
