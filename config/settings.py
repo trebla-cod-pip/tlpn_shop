@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n8nggd!y%!q*io0@@7jnuc)3qeq@1210doisz+ffmv0uijlx7='
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-n8nggd!y%!q*io0@@7jnuc)3qeq@1210doisz+ffmv0uijlx7=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
@@ -104,7 +104,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.getenv('DB_PATH', str(BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -168,3 +168,13 @@ ANALYTICS_IP_SALT = SECRET_KEY  # Используем SECRET_KEY для хеш�
 
 # Для продакшена - смените на уникальный salt
 # ANALYTICS_IP_SALT = 'your-unique-salt-change-me'
+
+# ============================================================================
+# Local Settings (не хранить в git!)
+# ============================================================================
+# Этот файл используется для локальных переопределений настроек
+# Создайте config/local_settings.py с нужными параметрами
+try:
+    from .local_settings import *
+except ImportError:
+    pass

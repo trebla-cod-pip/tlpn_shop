@@ -1,0 +1,38 @@
+# =============================================================================
+# Local Settings Template (НЕ КОММИТИТЬ В GIT!)
+# =============================================================================
+# Скопируйте этот файл в local_settings.py и настройте для локальной разработки
+# cp local_settings.py.example local_settings.py
+# =============================================================================
+
+# Отладка
+DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.*']
+
+# База данных (локальная)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR.parent / 'db.sqlite3',  # В корне проекта
+    }
+}
+
+# Telegram (тестовый бот)
+TELEGRAM_BOT_TOKEN = 'your-test-bot-token'
+TELEGRAM_WEBAPP_URL = 'http://localhost:8000'
+TELEGRAM_ADMIN_ID = '123456789'
+
+# Email (для локальной разработки - вывод в консоль)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Кэширование (отключено для разработки)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#     }
+# }
+
+# Django Debug Toolbar (опционально)
+# INSTALLED_APPS += ['debug_toolbar']
+# MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+# INTERNAL_IPS = ['127.0.0.1']

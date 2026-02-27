@@ -1,0 +1,109 @@
+# =============================================================================
+# Django/Python
+# =============================================================================
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Local settings (secrets, development settings)
+config/local_settings.py
+local_settings.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# =============================================================================
+# Django
+# =============================================================================
+
+# Static files (collected)
+staticfiles/
+collected_static/
+
+# Media files (user uploads)
+media/
+
+# Logs
+*.log
+logs/
+
+# Database migrations (keep migration files, exclude initial state)
+# **/migrations/*.py
+# !**/migrations/__init__.py
+# !**/migrations/00*.py
+
+# =============================================================================
+# Gunicorn
+# =============================================================================
+*.sock
+gunicorn.ctl
+gunicorn.pid
+
+# =============================================================================
+# OS / System
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# =============================================================================
+# SSL / Certificates (never commit these!)
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.csr
+letsencrypt/
+
+# =============================================================================
+# Secrets
+# =============================================================================
+secrets.json
+*.secret
+*.key
