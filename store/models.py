@@ -1,5 +1,6 @@
 
 from django.db import models
+from django.utils import timezone
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFit
 
@@ -119,3 +120,57 @@ class Product(models.Model):
         if self.old_price and self.old_price > self.price:
             return int(((self.old_price - self.price) / self.old_price) * 100)
         return 0
+
+
+class TelegramUser(models.Model):
+    """
+    Пользователь Telegram Mini App
+    Сохраняет данные из Telegram для аналитики и уведомлений
+    """
+    telegram_id = models.BigIntegerField(unique=True, verbose_name='Telegram ID')
+    username = models.CharField(max_length=100, blank=True, verbose_name='Username')
+    first_name = models.CharField(max_length=100, blank=True, verbose_name='Имя')
+    last_name = models.CharField(max_length=100, blank=True, verbose_name='Фамилия')
+    language_code = models.CharField(max_length=10, blank=True, verbose_name='Язык')
+    is_premium = models.BooleanField(default=False, verbose_name='Premium')
+    
+    # Связь с Django User (опционально)
+    user = models.OneToOneField(
+        'auth.User', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='telegram_profile',
+        verbose_name='Пользователь Django'
+    )
+    
+    # Для уведомлений
+    chat_id = models.BigIntegerField(blank=True, null=True, verbose_name='Chat ID для уведомлений')
+    
+    # Даты
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    last_seen = models.DateTimeField(auto_now=True, verbose_name='Последний раз')
+    
+    class Meta:
+        verbose_name = 'Telegram пользователь'
+        verbose_name_plural = 'Telegram пользователи'
+        ordering = ['-last_seen']
+        indexes = [
+            models.Index(fields=['telegram_id']),
+            models.Index(fields=['username']),
+            models.Index(fields=['last_seen']),
+        ]
+    
+    def __str__(self):
+        name = f'{self.first_name} {self.last_name}'.strip() or self.username
+        return f'@{name} (ID: {self.telegram_id})'
+    
+    def update_from_telegram(self, user_data: dict):
+        """Обновляет данные пользователя из Telegram"""
+        self.username = user_data.get('username', '')
+        self.first_name = user_data.get('first_name', '')
+        self.last_name = user_data.get('last_name', '')
+        self.language_code = user_data.get('language_code', '')
+        self.is_premium = user_data.get('is_premium', False)
+        self.last_seen = timezone.now()
+        self.save()
