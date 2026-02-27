@@ -81,11 +81,10 @@ run_migrations() {
     success "Миграции применены"
 }
 
-# Создание суперпользователя (интерактивно)
+# Создание суперпользователя (автоматически)
 create_superuser() {
     info "Создание суперпользователя..."
-    echo "Создайте администратора для доступа к Django Admin"
-    $PYTHON_CMD manage.py createsuperuser
+    $PYTHON_CMD manage.py shell < create_superuser.py
     success "Суперпользователь создан"
 }
 

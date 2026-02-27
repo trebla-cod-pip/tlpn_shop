@@ -105,7 +105,7 @@ echo [OK] Migratsii primeneny
 echo.
 
 echo [INFO] Sozdaniye super'pol'zovatelya...
-venv\Scripts\python manage.py createsuperuser
+venv\Scripts\python manage.py shell ^< create_superuser.py
 echo [OK] Super'pol'zovatel' sozdan
 echo.
 
