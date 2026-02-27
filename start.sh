@@ -116,12 +116,12 @@ run_server() {
     echo ""
     echo "================================================="
     echo "  Сервер запущен!"
-    echo "  - Основной сайт: http://localhost:8000"
-    echo "  - Admin панель:  http://localhost:8000/admin"
-    echo "  - API:           http://localhost:8000/api/"
+    echo "  - Основной сайт: http://0.0.0.0:8000"
+    echo "  - Admin панель:  http://0.0.0.0:8000/admin"
+    echo "  - API:           http://0.0.0.0:8000/api/"
     echo "================================================="
     echo ""
-    $PYTHON_CMD manage.py runserver
+    $PYTHON_CMD manage.py runserver 0.0.0.0:8000
 }
 
 # Помощь

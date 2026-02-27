@@ -138,9 +138,9 @@ goto runserver
 echo.
 echo =================================================
 echo   Server zapushchen!
-echo   - Osnovnoy sayt: http://localhost:8000
-echo   - Admin panel':  http://localhost:8000/admin
-echo   - API:           http://localhost:8000/api/
+echo   - Osnovnoy sayt: http://0.0.0.0:8000
+echo   - Admin panel':  http://0.0.0.0:8000/admin
+echo   - API:           http://0.0.0.0:8000/api/
 echo =================================================
 echo.
-venv\Scripts\python manage.py runserver
+venv\Scripts\python manage.py runserver 0.0.0.0:8000
