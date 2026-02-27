@@ -50,17 +50,20 @@ check_python() {
     info "Используется: $($PYTHON_CMD --version)"
 }
 
-# Проверка виртуального окружения
-check_venv() {
+# Создание/активация виртуального окружения
+setup_venv() {
     if [ -z "$VIRTUAL_ENV" ]; then
-        warning "Виртуальное окружение не активировано"
-        info "Рекомендуется создать и активировать venv:"
-        echo "   python -m venv venv"
-        echo "   source venv/bin/activate  (Linux/Mac)"
-        echo "   venv\Scripts\activate     (Windows)"
-        echo ""
+        if [ ! -d "venv" ]; then
+            info "Создание виртуального окружения..."
+            $PYTHON_CMD -m venv venv
+            success "Виртуальное окружение создано"
+        fi
+        
+        info "Активация виртуального окружения..."
+        source venv/bin/activate
+        success "Виртуальное окружение активировано: $VIRTUAL_ENV"
     else
-        success "Виртуальное окружение: $VIRTUAL_ENV"
+        success "Виртуальное окружение уже активно: $VIRTUAL_ENV"
     fi
 }
 
@@ -154,7 +157,7 @@ main() {
         --clean)
             clean_db
             check_python
-            check_venv
+            setup_venv
             install_deps
             run_migrations
             create_superuser
@@ -171,14 +174,14 @@ main() {
             ;;
         --no-data)
             check_python
-            check_venv
+            setup_venv
             run_migrations
             run_server
             ;;
         "")
             # Полный запуск по умолчанию
             check_python
-            check_venv
+            setup_venv
             install_deps
             run_migrations
             load_test_data
