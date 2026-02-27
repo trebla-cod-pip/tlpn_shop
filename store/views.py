@@ -2,9 +2,17 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import render
+import json
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from store.models import Category, Product
 from store.serializers import CategorySerializer, ProductListSerializer, ProductDetailSerializer
+
+from orders.models import Order
+from orders.serializers import OrderSerializer
 
 
 # ============ Web Views ============
@@ -21,7 +29,67 @@ def item(request, slug):
 
 def bag(request):
     """Корзина"""
-    return render(request, 'store/bag.html')
+    cart_items = request.session.get('cart_items', [])
+    cart_currency = request.session.get('cart_currency', 'RUB')
+    cart_total = sum(
+        (item.get('price', 0) or 0) * (item.get('quantity', 1) or 1)
+        for item in cart_items
+    )
+    context = {
+        'cart_items': cart_items,
+        'cart_currency': cart_currency,
+        'cart_total': cart_total,
+    }
+    return render(request, 'store/cart_detail.html', context)
+
+
+def order_success(request):
+    """Страница успеха заказа"""
+    order_id = request.GET.get('order_id')
+    order = None
+    if order_id:
+        order = get_object_or_404(Order, pk=order_id)
+    elif 'last_order_id' in request.session:
+        order = get_object_or_404(Order, pk=request.session.get('last_order_id'))
+
+    order_data = OrderSerializer(order).data if order else {}
+    # Добавим категорию в каждый элемент
+    for item in order_data.get('items', []):
+        item.setdefault('category', 'Тюльпаны')
+    return render(request, 'store/order_success.html', {'order': order_data})
+
+
+@csrf_exempt
+@require_POST
+def sync_cart_session(request):
+    """Сохраняем содержимое корзины в сессии для аналитики"""
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        payload = []
+
+    cart_items = []
+    total = 0
+    for raw_item in payload:
+        price = float(raw_item.get('price') or 0)
+        qty = int(raw_item.get('quantity') or 1)
+        name = raw_item.get('name') or ''
+        item = {
+            'id': raw_item.get('id'),
+            'name': name,
+            'price': price,
+            'quantity': qty,
+            'category': raw_item.get('category', 'Тюльпаны'),
+            'total': price * qty,
+            'image': raw_item.get('image'),
+        }
+        total += item['total']
+        cart_items.append(item)
+
+    request.session['cart_items'] = cart_items
+    request.session['cart_total'] = total
+    request.session['cart_currency'] = 'RUB'
+    return JsonResponse({'status': 'ok', 'items': len(cart_items), 'total': total})
 
 
 def favorites(request):

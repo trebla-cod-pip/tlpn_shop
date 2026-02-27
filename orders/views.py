@@ -52,6 +52,7 @@ class OrderViewSet(
             logger.error(f"Ошибка отправки уведомления: {e}")
         
         # Возвращаем данные заказа
+        request.session['last_order_id'] = order.id
         response_serializer = OrderSerializer(order)
         headers = self.get_success_headers(response_serializer.data)
         return Response(

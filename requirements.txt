@@ -2,6 +2,7 @@
 Django>=5.2.0
 djangorestframework>=3.15.0
 django-filter>=24.0
+django-imagekit>=4.1.0
 
 # Telegram
 aiogram>=3.0.0

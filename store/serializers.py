@@ -1,5 +1,12 @@
+# helper to reuse WebP spec serialization
 from rest_framework import serializers
+
 from store.models import Category, Product
+
+
+def _webp_url(obj, attr):
+    spec = getattr(obj, attr, None)
+    return spec.url if getattr(spec, 'url', None) else None
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -21,13 +28,16 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_slug = serializers.CharField(source='category.slug', read_only=True)
     tags_list = serializers.SerializerMethodField()
     discount = serializers.ReadOnlyField()
+    image_webp_400 = serializers.SerializerMethodField()
+    image_webp_800 = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'price', 'old_price',
             'image', 'cart_image', 'category', 'category_name', 'category_slug',
-            'tags_list', 'is_active', 'is_featured', 'stock', 'discount', 'created_at'
+            'tags_list', 'is_active', 'is_featured', 'stock', 'discount', 'created_at',
+            'image_webp_400', 'image_webp_800'
         ]
         read_only_fields = ['slug']
 
@@ -36,6 +46,12 @@ class ProductListSerializer(serializers.ModelSerializer):
             return [tag.strip() for tag in obj.tags.split(',')]
         return []
 
+    def get_image_webp_400(self, obj):
+        return _webp_url(obj, 'image_webp_400')
+
+    def get_image_webp_800(self, obj):
+        return _webp_url(obj, 'image_webp_800')
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Сериалайзер для детальной информации о товаре"""
@@ -43,13 +59,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     tags_list = serializers.SerializerMethodField()
     discount = serializers.ReadOnlyField()
     related_products = serializers.SerializerMethodField()
+    image_webp_400 = serializers.SerializerMethodField()
+    image_webp_800 = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'price', 'old_price',
             'image', 'cart_image', 'category', 'tags_list', 'is_active', 'is_featured',
-            'stock', 'discount', 'created_at', 'updated_at', 'related_products'
+            'stock', 'discount', 'created_at', 'updated_at', 'related_products',
+            'image_webp_400', 'image_webp_800'
         ]
         read_only_fields = ['slug']
 

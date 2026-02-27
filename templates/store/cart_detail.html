@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Корзина — Tulipa{% endblock %}
+
+{% block content %}
+<div class="app-inner">
+    <section class="section" style="padding: 16px 24px;">
+        <h1 style="font-size: 22px; font-weight: 500; margin-bottom: 16px;">Корзина</h1>
+        <p style="color: var(--muted-foreground);">Проверьте товары перед оформлением.</p>
+        <!-- Реальная верстка корзины реализуется на стороне клиента -->
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ cart_items|default:"[]"|json_script:"cart-items-data" }}
+<script>
+    const cartItems = JSON.parse(document.getElementById('cart-items-data').textContent || '[]');
+    const cartCurrency = '{{ cart_currency|default:"RUB" }}';
+    const cartTotal = cartItems.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
+    dataLayerCart(cartItems, cartTotal, cartCurrency);
+</script>
+{% endblock %}

@@ -1,6 +1,7 @@
+
 from django.db import models
-from django.utils.text import slugify
-from django.utils.crypto import get_random_string
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFit
 
 
 def translit_slug(text):
@@ -72,6 +73,18 @@ class Product(models.Model):
     old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Старая цена')
     image = models.ImageField(upload_to='products/', verbose_name='Изображение')
     cart_image = models.ImageField(upload_to='products/cart/', blank=True, null=True, verbose_name='Изображение для корзины')
+    image_webp_400 = ImageSpecField(
+        source='image',
+        processors=[ResizeToFit(400, 400)],
+        format='WEBP',
+        options={'quality': 80},
+    )
+    image_webp_800 = ImageSpecField(
+        source='image',
+        processors=[ResizeToFit(800, 800)],
+        format='WEBP',
+        options={'quality': 80},
+    )
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', verbose_name='Категория')
     tags = models.CharField(max_length=200, blank=True, help_text='Теги через запятую (Хит, Новинка, Ограниченный)', verbose_name='Теги')
     is_active = models.BooleanField(default=True, verbose_name='Активен')

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Заказ оформлен — Tulipa{% endblock %}
+
+{% block content %}
+<div class="app-inner">
+    <section class="section" style="padding: 16px 24px;">
+        <h1 style="font-size: 22px; font-weight: 500; margin-bottom: 16px;">Спасибо за заказ</h1>
+        <p style="color: var(--muted-foreground);">Мы собираем цветы, и скоро доставим их вашему получателю.</p>
+        <!-- Дополнительные сведения можно добавить здесь по необходимости -->
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ order|default:{}|json_script:"order-data" }}
+<script>
+    const orderData = JSON.parse(document.getElementById('order-data').textContent || '{}');
+    dataLayerPurchase(orderData);
+</script>
+{% endblock %}

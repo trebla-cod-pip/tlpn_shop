@@ -25,6 +25,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('item/<slug:slug>/', views.item, name='item'),
     path('bag/', views.bag, name='bag'),
+    path('order-success/', views.order_success, name='order_success'),
+    path('cart-sync/', views.sync_cart_session, name='cart_sync'),
     path('favorites/', views.favorites, name='favorites'),
     path('profile/', views.profile, name='profile'),
     path('api/', include('store.urls')),
