@@ -126,15 +126,15 @@ deploy_project() {
 # Настройка Gunicorn systemd сервиса
 setup_gunicorn() {
     info "Настройка Gunicorn сервиса..."
-    
+
     cat > /etc/systemd/system/tulpin_shop.service <<EOF
 [Unit]
 Description=Tulpin Shop Gunicorn Daemon
 After=network.target
 
 [Service]
-User=root
-Group=root
+User=www-data
+Group=www-data
 WorkingDirectory=$PROJECT_ROOT
 ExecStart=$PROJECT_ROOT/venv/bin/gunicorn \\
     --access-logfile - \\
@@ -145,11 +145,14 @@ ExecStart=$PROJECT_ROOT/venv/bin/gunicorn \\
 [Install]
 WantedBy=multi-user.target
 EOF
+
+    # Даем права на сокет
+    chmod 666 $PROJECT_ROOT/tulpin_shop.sock 2>/dev/null || true
     
     systemctl daemon-reload
     systemctl enable tulpin_shop
     systemctl start tulpin_shop
-    
+
     success "Gunicorn сервис настроен и запущен"
 }
 
