@@ -240,10 +240,50 @@ EOF
 # SSL сертификат
 # =============================================================================
 
+setup_nginx_http() {
+    info "Настройка Nginx (HTTP режим для SSL challenge)..."
+    
+    mkdir -p /etc/nginx/sites-available
+    mkdir -p /etc/nginx/sites-enabled
+    mkdir -p /var/www/certbot
+    
+    # Временный конфиг ТОЛЬКО для HTTP challenge
+    cat > "$NGINX_CONF" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    # ACME challenge для Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Всё остальное - заглушка
+    location / {
+        return 200 "Tulpin Shop - Setting up SSL...";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+    
+    ln -sf "$NGINX_CONF" "$NGINX_LINK"
+    rm -f /etc/nginx/sites-enabled/default
+    
+    if nginx -t; then
+        systemctl reload nginx
+        success "Nginx настроен для SSL challenge"
+    else
+        error "Ошибка конфигурации Nginx!"
+        exit 1
+    fi
+}
+
 get_ssl() {
     info "Получение SSL сертификата..."
+    info "  Домены: $DOMAIN, www.$DOMAIN"
     
-    mkdir -p /var/www/certbot
+    # Даём время на распространение DNS
+    sleep 2
     
     certbot certonly \
         --webroot \
@@ -259,6 +299,10 @@ get_ssl() {
         success "SSL сертификат получен"
     else
         error "Не удалось получить SSL сертификат"
+        error "Проверьте:"
+        error "  1. DNS A-запись $DOMAIN → $(dig +short $DOMAIN | head -1)"
+        error "  2. Порт 80 открыт: sudo ufw status | grep 80"
+        error "  3. Nginx работает: sudo systemctl status nginx"
         exit 1
     fi
 }
@@ -472,9 +516,10 @@ main() {
         --ssl-only)
             check_root
             check_domain
-            get_ssl
+            setup_nginx_http    # Сначала HTTP конфиг для challenge
+            get_ssl             # Получаем SSL
             setup_ssl_renew
-            setup_nginx
+            setup_nginx         # Потом полный конфиг с SSL
             show_summary
             ;;
         --fonts)
@@ -491,9 +536,10 @@ main() {
             setup_project
             setup_fonts
             setup_gunicorn
-            get_ssl
+            setup_nginx_http    # Сначала HTTP конфиг для challenge
+            get_ssl             # Получаем SSL
             setup_ssl_renew
-            setup_nginx
+            setup_nginx         # Потом полный конфиг с SSL
             create_env_production
             show_summary
             ;;
