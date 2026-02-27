@@ -118,9 +118,48 @@
 <script>
     let cart = [];
     let total = 0;
+    let user = {};
+
+    // Инициализация Telegram WebApp
+    function initTelegramUser() {
+        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+            const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+            user = {
+                id: tgUser.id,
+                username: tgUser.username || '',
+                first_name: tgUser.first_name || '',
+                last_name: tgUser.last_name || '',
+                phone: tgUser.phone || '',
+            };
+            
+            // Haptic feedback при входе
+            if (window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+            
+            // Автозаполнение формы если открыта
+            fillCheckoutForm();
+        }
+    }
+
+    // Автозаполнение формы оформления
+    function fillCheckoutForm() {
+        if (!user.id) return;
+        
+        const phoneInput = document.getElementById('phone');
+        const emailInput = document.getElementById('email');
+        
+        if (phoneInput && !phoneInput.value) {
+            phoneInput.value = user.phone || '';
+        }
+        if (emailInput && !emailInput.value && user.username) {
+            emailInput.value = `${user.username}@telegram.com`;
+        }
+    }
 
     // Загрузка корзины из localStorage
     function loadCart() {
+        initTelegramUser();
         const storedCart = localStorage.getItem('cart');
         cart = storedCart ? JSON.parse(storedCart) : [];
         renderCart();
@@ -180,6 +219,12 @@
         const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
         document.getElementById('items-count').textContent = `${itemCount} товар${itemCount === 1 ? '' : (itemCount < 5 ? 'а' : 'ов')}`;
         document.getElementById('total-amount').textContent = `${total.toFixed(2)} ₽`;
+        
+        // Обновляем MainButton если открыта форма
+        if (window.Telegram?.WebApp?.MainButton?.isVisible) {
+            const tg = window.Telegram.WebApp;
+            tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
+        }
     }
 
     // Обновление количества
@@ -218,21 +263,41 @@
     // Показать форму оформления
     function showCheckout() {
         document.getElementById('checkout-modal').style.display = 'flex';
-        
+
         // Устанавливаем минимальную дату - сегодня
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('delivery_date').setAttribute('min', today);
-        
+
         // Заполняем данные из Telegram
-        if (user) {
-            document.getElementById('phone').value = user.phone || '';
-            document.getElementById('email').value = user.email || '';
+        fillCheckoutForm();
+        
+        // Показываем Telegram MainButton
+        if (window.Telegram?.WebApp?.MainButton) {
+            const tg = window.Telegram.WebApp;
+            tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
+            tg.MainButton.show();
+            tg.MainButton.onClick(submitOrderFromMainButton);
+        }
+    }
+
+    // Отправка заказа через MainButton
+    function submitOrderFromMainButton() {
+        const form = document.getElementById('order-form');
+        if (form) {
+            form.requestSubmit();
         }
     }
 
     // Скрыть форму оформления
     function hideCheckout() {
         document.getElementById('checkout-modal').style.display = 'none';
+        
+        // Скрываем Telegram MainButton
+        if (window.Telegram?.WebApp?.MainButton) {
+            const tg = window.Telegram.WebApp;
+            tg.MainButton.hide();
+            tg.MainButton.offClick(submitOrderFromMainButton);
+        }
     }
 
     // Отправка заказа
