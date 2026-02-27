@@ -2,49 +2,60 @@
 # =============================================================================
 # Tulpin Shop - Production Deployment Script
 # =============================================================================
-# Использование:
-#   ./deploy.sh              - полное развёртывание
-#   ./deploy.sh --ssl-only   - только SSL настройка
-#   ./deploy.sh --status     - показать статус
-#   ./deploy.sh --help       - эта справка
-# =============================================================================
 
-set -e
+set -euo pipefail
 
-# Цвета для вывода
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Переменные
-PROJECT_ROOT="/root/tlpn_shop"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOMAIN="tlpn.shop"
+EMAIL="admin@$DOMAIN"
 STATIC_ROOT="/var/www/tlpn_shop/static"
 MEDIA_ROOT="/var/www/tlpn_shop/media"
-EMAIL="admin@$DOMAIN"
+CERTBOT_ROOT="/var/www/certbot"
+SOCKET_DIR="/run/tulpin_shop"
+SOCKET_PATH="$SOCKET_DIR/tulpin_shop.sock"
+NGINX_CONF="/etc/nginx/sites-available/tlpn_shop"
+NGINX_LINK="/etc/nginx/sites-enabled/tlpn_shop"
+APP_USER="www-data"
+APP_GROUP="www-data"
 
 info() { echo -e "${BLUE}>>> $1${NC}"; }
-success() { echo -e "${GREEN}✓ $1${NC}"; }
-warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
-error() { echo -e "${RED}✗ $1${NC}"; }
+success() { echo -e "${GREEN}OK: $1${NC}"; }
+warning() { echo -e "${YELLOW}WARN: $1${NC}"; }
+error() { echo -e "${RED}ERROR: $1${NC}"; }
 
-# Проверка root прав
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        error "Требуется запуск от root! Используйте: sudo ./deploy.sh"
+        error "Run as root: sudo ./deploy.sh"
         exit 1
     fi
 }
 
-# Обновление системы и установка зависимостей
+check_project_root() {
+    if [ ! -f "$PROJECT_ROOT/manage.py" ]; then
+        error "manage.py not found in $PROJECT_ROOT"
+        error "Run deploy.sh from the project directory"
+        exit 1
+    fi
+
+    # /root is usually not traversable by www-data, so fallback to root gunicorn.
+    if [[ "$PROJECT_ROOT" == /root/* ]]; then
+        warning "PROJECT_ROOT is under /root, Gunicorn will run as root"
+        warning "Recommended project path: /opt/tlpn_shop"
+        APP_USER="root"
+        APP_GROUP="www-data"
+    fi
+}
+
 setup_system() {
-    info "Обновление системы..."
+    info "Installing system dependencies..."
     apt-get update -qq
     apt-get upgrade -y -qq
-
-    info "Установка системных зависимостей..."
     apt-get install -y -qq \
         python3 \
         python3-pip \
@@ -57,75 +68,61 @@ setup_system() {
         nginx \
         certbot \
         python3-certbot-nginx
-
-    success "Системные зависимости установлены"
+    success "System dependencies installed"
 }
 
-# Создание директорий для статики и медиа
 setup_static_dirs() {
-    info "Создание директорий для статики и медиа..."
-    
-    mkdir -p "$STATIC_ROOT"
-    mkdir -p "$MEDIA_ROOT"
-    
-    # Даем права www-data для nginx
+    info "Preparing static/media directories..."
+    mkdir -p "$STATIC_ROOT" "$MEDIA_ROOT"
     chown -R www-data:www-data /var/www/tlpn_shop
     chmod -R 755 /var/www/tlpn_shop
-    
-    success "Директории созданы"
+    success "Static/media directories are ready"
 }
 
-# Развёртывание проекта
 deploy_project() {
-    info "Развёртывание проекта..."
-
+    info "Deploying project..."
     cd "$PROJECT_ROOT"
 
-    # Создание venv если нет
     if [ ! -d "venv" ]; then
         python3 -m venv venv
-        success "Виртуальное окружение создано"
+        success "Virtualenv created"
     fi
 
-    # Активация и установка зависимостей
+    # shellcheck disable=SC1091
     source venv/bin/activate
     pip install --upgrade pip
     pip install -r requirements.txt
     pip install gunicorn
-    success "Python зависимости установлены"
 
-    # Сбор статики в правильную директорию (через переменные окружения)
-    info "Сбор статических файлов..."
     export STATIC_ROOT="$STATIC_ROOT"
     export MEDIA_ROOT="$MEDIA_ROOT"
-    python manage.py collectstatic --noinput
-    success "Статические файлы собраны"
 
-    # Копирование медиа файлов (если есть)
-    if [ -d "$PROJECT_ROOT/media" ] && [ "$(ls -A $PROJECT_ROOT/media 2>/dev/null)" ]; then
-        info "Копирование медиа файлов..."
-        cp -r "$PROJECT_ROOT/media/"* "$MEDIA_ROOT/"
-        chown -R www-data:www-data "$MEDIA_ROOT"
-        success "Медиа файлы скопированы"
+    python manage.py collectstatic --noinput
+    python manage.py migrate
+
+    if [ -f create_superuser.py ]; then
+        python manage.py shell < create_superuser.py
     fi
 
-    # Миграции
-    python manage.py migrate
-    success "Миграции применены"
-
-    # Создание суперпользователя
-    python manage.py shell < create_superuser.py
-
-    # Тестовые данные (опционально)
     if [ -f create_test_data.py ]; then
         python manage.py shell < create_test_data.py
-        success "Тестовые данные созданы"
     fi
+
+    if [ -d "$PROJECT_ROOT/media" ] && [ "$(ls -A "$PROJECT_ROOT/media" 2>/dev/null)" ]; then
+        cp -r "$PROJECT_ROOT/media/"* "$MEDIA_ROOT/"
+        chown -R www-data:www-data "$MEDIA_ROOT"
+    fi
+
+    success "Project deployed"
 }
 
-# Настройка Gunicorn systemd сервиса
 setup_gunicorn() {
-    info "Настройка Gunicorn сервиса..."
+    info "Configuring Gunicorn service..."
+
+    mkdir -p "$SOCKET_DIR"
+    chown "$APP_USER:$APP_GROUP" "$SOCKET_DIR"
+    chmod 755 "$SOCKET_DIR"
+    rm -f "$SOCKET_PATH"
 
     cat > /etc/systemd/system/tulpin_shop.service <<EOF
 [Unit]
@@ -133,37 +130,68 @@ Description=Tulpin Shop Gunicorn Daemon
 After=network.target
 
 [Service]
-User=www-data
-Group=www-data
+Type=simple
+User=$APP_USER
+Group=$APP_GROUP
 WorkingDirectory=$PROJECT_ROOT
+RuntimeDirectory=tulpin_shop
+RuntimeDirectoryMode=0755
+UMask=0007
+Environment=PYTHONUNBUFFERED=1
 ExecStart=$PROJECT_ROOT/venv/bin/gunicorn \\
     --access-logfile - \\
     --workers 3 \\
-    --bind unix:$PROJECT_ROOT/tulpin_shop.sock \\
+    --bind unix:$SOCKET_PATH \\
     config.wsgi:application
+ExecReload=/bin/kill -s HUP \$MAINPID
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Даем права на сокет
-    chmod 666 $PROJECT_ROOT/tulpin_shop.sock 2>/dev/null || true
-    
     systemctl daemon-reload
     systemctl enable tulpin_shop
-    systemctl start tulpin_shop
-
-    success "Gunicorn сервис настроен и запущен"
+    systemctl restart tulpin_shop
+    success "Gunicorn service configured"
 }
 
-# Настройка Nginx
-setup_nginx() {
-    info "Настройка Nginx..."
+setup_nginx_http() {
+    info "Configuring Nginx HTTP (ACME challenge)..."
 
-    # Создаём конфиг с правильными путями
-    cat > /etc/nginx/sites-available/tlpn_shop <<EOF
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled "$CERTBOT_ROOT"
+
+    cat > "$NGINX_CONF" <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    location /.well-known/acme-challenge/ {
+        root $CERTBOT_ROOT;
+    }
+
+    location / {
+        return 200 "Tulpin Shop - setting up SSL";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+
+    ln -sf "$NGINX_CONF" "$NGINX_LINK"
+    rm -f /etc/nginx/sites-enabled/default
+
+    nginx -t
+    systemctl reload nginx
+    success "Nginx HTTP config applied"
+}
+
+setup_nginx() {
+    info "Configuring Nginx reverse proxy..."
+
+    cat > "$NGINX_CONF" <<EOF
 upstream django_app {
-    server unix:$PROJECT_ROOT/tulpin_shop.sock fail_timeout=0;
+    server unix:$SOCKET_PATH fail_timeout=0;
 }
 
 server {
@@ -171,7 +199,7 @@ server {
     server_name $DOMAIN www.$DOMAIN;
 
     location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
+        root $CERTBOT_ROOT;
     }
 
     location / {
@@ -189,7 +217,6 @@ server {
     ssl_session_timeout 1d;
     ssl_session_cache shared:SSL:50m;
     ssl_session_tickets off;
-
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
@@ -235,101 +262,74 @@ server {
 }
 EOF
 
-    # Создаём симлинк
-    ln -sf /etc/nginx/sites-available/tlpn_shop /etc/nginx/sites-enabled/tlpn_shop
+    ln -sf "$NGINX_CONF" "$NGINX_LINK"
     rm -f /etc/nginx/sites-enabled/default
 
-    # Проверка и перезапуск
-    if nginx -t; then
-        systemctl reload nginx
-        success "Nginx настроен"
-    else
-        error "Ошибка конфигурации Nginx!"
-        exit 1
-    fi
+    nginx -t
+    systemctl reload nginx
+    success "Nginx reverse proxy configured"
 }
 
-# Проверка и получение SSL сертификата
 get_ssl() {
-    info "Проверка SSL сертификата..."
+    info "Ensuring SSL certificate..."
+    mkdir -p "$CERTBOT_ROOT"
 
-    # Создаём директорию для challenge
-    mkdir -p /var/www/certbot
-
-    # Проверяем, существует ли сертификат
-    if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
-        # Проверяем, не истекает ли сертификат (менее 30 дней)
-        if certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
-            EXPIRY=$(certbot certificates 2>/dev/null | grep "$DOMAIN" | awk '{print $NF}')
-            info "SSL сертификат уже существует (действует до: $EXPIRY)"
-            success "SSL сертификат найден"
-            return 0
-        fi
+    if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ] && certbot certificates 2>/dev/null | grep -q "$DOMAIN"; then
+        success "SSL certificate already exists"
+        return 0
     fi
 
-    info "Получение SSL сертификата..."
-    
     certbot certonly \
         --webroot \
-        -w /var/www/certbot \
-        -d $DOMAIN \
-        -d www.$DOMAIN \
-        --email $EMAIL \
+        -w "$CERTBOT_ROOT" \
+        -d "$DOMAIN" \
+        -d "www.$DOMAIN" \
+        --email "$EMAIL" \
         --agree-tos \
         --non-interactive \
         --force-renewal
 
-    if [ $? -eq 0 ]; then
-        success "SSL сертификат получен"
-        systemctl reload nginx
-    else
-        error "Не удалось получить SSL сертификат"
-        exit 1
-    fi
+    success "SSL certificate issued"
 }
 
-# Настройка автообновления SSL
 setup_ssl_renew() {
-    info "Настройка автообновления SSL..."
+    info "Enabling SSL auto-renew..."
     systemctl enable certbot.timer
     systemctl start certbot.timer
-    success "Автообновление SSL настроено"
+    success "SSL auto-renew enabled"
 }
 
-# Показать статус
 show_status() {
     echo ""
     echo "================================================="
     echo "         TULPIN SHOP - Deployment Status"
     echo "================================================="
     echo ""
-    echo "Домен: https://$DOMAIN"
+    echo "Domain: https://$DOMAIN"
+    echo "Project root: $PROJECT_ROOT"
+    echo "Gunicorn socket: $SOCKET_PATH"
     echo ""
     systemctl status tulpin_shop --no-pager -l || true
     echo ""
     systemctl status nginx --no-pager -l || true
     echo ""
-    echo "Логи:"
+    echo "Logs:"
     echo "  - Gunicorn: journalctl -u tulpin_shop -f"
     echo "  - Nginx: tail -f /var/log/nginx/tlpn_shop_error.log"
     echo ""
 }
 
-# Помощь
 show_help() {
     echo "Tulpin Shop - Production Deployment"
     echo ""
-    echo "Использование:"
-    echo "  ./deploy.sh              - полное развёртывание"
-    echo "  ./deploy.sh --ssl-only   - только SSL настройка"
-    echo "  ./deploy.sh --status     - показать статус"
-    echo "  ./deploy.sh --help       - эта справка"
+    echo "Usage:"
+    echo "  ./deploy.sh              - full deployment"
+    echo "  ./deploy.sh --proxy-only - reconfigure gunicorn/nginx only"
+    echo "  ./deploy.sh --ssl-only   - SSL and Nginx only"
+    echo "  ./deploy.sh --status     - show service status"
+    echo "  ./deploy.sh --help       - help"
     echo ""
 }
-
-# =============================================================================
-# Основная логика
-# =============================================================================
 
 main() {
     echo ""
@@ -339,11 +339,21 @@ main() {
     echo ""
 
     check_root
+    check_project_root
 
     case "${1:-}" in
-        --ssl-only)
-            setup_nginx
+        --proxy-only)
+            setup_gunicorn
+            setup_nginx_http
             get_ssl
+            setup_nginx
+            setup_ssl_renew
+            show_status
+            ;;
+        --ssl-only)
+            setup_nginx_http
+            get_ssl
+            setup_nginx
             setup_ssl_renew
             show_status
             ;;
@@ -358,13 +368,14 @@ main() {
             setup_static_dirs
             deploy_project
             setup_gunicorn
-            setup_nginx
+            setup_nginx_http
             get_ssl
+            setup_nginx
             setup_ssl_renew
             show_status
             ;;
         *)
-            error "Неизвестная опция: $1"
+            error "Unknown option: $1"
             show_help
             exit 1
             ;;
