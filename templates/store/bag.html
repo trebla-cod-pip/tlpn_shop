@@ -956,8 +956,78 @@
         document.body.appendChild(notification);
     }
 
+    // Отладочная панель для TMA
+    function initDebugPanel() {
+        const debugPanel = document.createElement('div');
+        debugPanel.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            left: 10px;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        `;
+        debugPanel.innerHTML = '<div style="font-weight: bold; margin-bottom: 8px; color: #ffff00;">🔧 TMA Debug</div><div id="tma-debug-logs"></div>';
+        document.body.appendChild(debugPanel);
+
+        const logsDiv = document.getElementById('tma-debug-logs');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function addLog(message, type = 'log') {
+            const line = document.createElement('div');
+            line.style.cssText = `
+                margin: 2px 0;
+                padding: 2px 4px;
+                white-space: pre-wrap;
+                word-break: break-word;
+                color: ${type === 'error' ? '#ff4444' : type === 'warn' ? '#ffaa00' : '#00ff00'};
+            `;
+            const timestamp = new Date().toLocaleTimeString('ru-RU');
+            line.textContent = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(line);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            if (args[0] && args[0].toString().includes('[TMA')) {
+                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'log');
+            }
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            if (args[0] && args[0].toString().includes('[TMA')) {
+                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'error');
+            }
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            if (args[0] && args[0].toString().includes('[TMA')) {
+                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'warn');
+            }
+        };
+
+        addLog('Debug panel initialized', 'log');
+    }
+
     // Инициализация
-    document.addEventListener('DOMContentLoaded', loadCart);
+    document.addEventListener('DOMContentLoaded', () => {
+        initDebugPanel();
+        loadCart();
+    });
 </script>
 {% endblock %}
 
