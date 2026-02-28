@@ -81,13 +81,6 @@
     </nav>
 </div>
 
-<!-- Временная кнопка сброса localStorage (для отладки) -->
-<button id="debug-reset-btn" onclick="clearStorageDebug()" 
-        style="position:fixed;bottom:80px;right:10px;z-index:9999;padding:10px 16px;background:#dc3545;color:white;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:0.8;"
-        title="Сбросить localStorage">
-    🗑️ Сброс данных
-</button>
-
 <!-- Contact Method Modal -->
 <div id="contact-method-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
     <div class="contact-method-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
@@ -1043,15 +1036,6 @@
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', loadCart);
-
-    // Функция сброса localStorage (для отладки)
-    function clearStorageDebug() {
-        if (confirm('Сбросить все данные?\n\nЭто удалит:\n• Корзину\n• Сохранённый профиль\n• Все данные сайта')) {
-            localStorage.clear();
-            alert('Данные сброшены! Страница перезагрузится.');
-            location.reload();
-        }
-    }
 </script>
 {% endblock %}
 

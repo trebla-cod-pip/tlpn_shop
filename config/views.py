@@ -121,7 +121,8 @@ def order_stats(request):
         'product_id',
         'product__name',
         'product__slug',
-        'product__image'
+        'product__image',
+        'product__cart_image'
     ).annotate(
         total_quantity=Sum('quantity'),
         total_revenue=Sum('total')
