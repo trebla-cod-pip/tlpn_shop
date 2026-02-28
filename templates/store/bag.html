@@ -1015,7 +1015,11 @@
 
         } catch (error) {
             console.error('[TMA] Error creating order:', error);
-            // Ошибка уже показана в alert выше
+            
+            // Показываем ошибку СРАЗУ, до закрытия модальных окон
+            let errorMsg = error.message || 'Не удалось создать заказ';
+            alert(errorMsg);
+            
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
