@@ -37,32 +37,28 @@
             </div>
             <div class="d-info" style="display: flex; flex-direction: column;">
                 <h2 class="d-title" style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Самовывоз</h2>
-                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Заберите заказ из нашего бутика по адресу ул. Каштановая 9. Мы подготовим его к вашему приезду.</p>
+                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">ул. Каштановая 9</p>
                 <span class="d-price" style="font-size: 15px; font-weight: 500;">Бесплатно</span>
             </div>
         </div>
-
-        <!-- Image -->
-        <div class="image-container" style="margin: 32px 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
-            <img src="https://storage.googleapis.com/banani-generated-images/generated-images/3a8c4f9f-97c6-46aa-9a7b-85a62e1ad013.jpg" alt="Premium packaging" style="width: 100%; height: auto; display: block; object-fit: cover;">
-        </div>
-
-        <!-- Info Section -->
-        <div class="info-section" style="margin-top: 40px;">
-            <h3 class="info-title" style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">Упаковка и свежесть</h3>
-            <p class="info-text" style="font-size: 15px; color: var(--muted-foreground); line-height: 1.6; margin-bottom: 32px;">
-                Мы гарантируем идеальное состояние цветов при доставке. Каждый букет отправляется в специальном транспортировочном аквабоксе и защитной коробке, оберегающей от перепадов температуры.
-            </p>
-
-            <h3 class="info-title" style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">Анонимный подарок</h3>
-            <p class="info-text" style="font-size: 15px; color: var(--muted-foreground); line-height: 1.6; margin-bottom: 32px;">
-                Желаете сделать сюрприз? Укажите это при оформлении заказа, и мы доставим цветы инкогнито, передав получателю только ваши теплые слова в фирменной открытке.
-            </p>
-        </div>
-
-        <button class="support-btn" onclick="navigateTo('/profile/')" style="width: 100%; padding: 18px; background: var(--muted); color: var(--foreground); border: none; border-radius: var(--radius-xl); font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 24px;">
-            Связаться с поддержкой
-        </button>
     </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" style="border-top: 1px solid var(--border); background: var(--background); padding: 16px 24px 32px;">
+        <div class="bottom-nav-inner" style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
+                <span>Главная</span>
+            </a>
+            <a href="/delivery/" class="nav-item nav-item--active">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-delivery"></use></svg>
+                <span>Доставка</span>
+            </a>
+            <a href="/bag/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>
+                <span>Корзина</span>
+            </a>
+        </div>
+    </nav>
 </div>
 {% endblock %}
