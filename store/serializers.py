@@ -49,6 +49,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_slug = serializers.CharField(source='category.slug', read_only=True)
     tags_list = serializers.SerializerMethodField()
     discount = serializers.ReadOnlyField()
+    image_webp_url = serializers.ReadOnlyField()
     image_webp_400 = serializers.SerializerMethodField()
     image_webp_800 = serializers.SerializerMethodField()
 
@@ -58,7 +59,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'price', 'old_price',
             'image', 'cart_image', 'category', 'category_name', 'category_slug',
             'tags_list', 'is_active', 'is_featured', 'stock', 'discount', 'created_at',
-            'image_webp_400', 'image_webp_800'
+            'image_webp_url', 'image_webp_400', 'image_webp_800'
         ]
         read_only_fields = ['slug']
 
@@ -67,18 +68,19 @@ class ProductListSerializer(serializers.ModelSerializer):
             return [tag.strip() for tag in obj.tags.split(',')]
         return []
 
+    def get_image_webp_url(self, obj):
+        return obj.image_webp_url
+
     def get_image_webp_400(self, obj):
         try:
-            return _webp_url(obj, 'image_webp_400')
+            return obj.image_webp_url
         except Exception:
-            # Fallback на обычное изображение если WebP не сгенерировалось
             return obj.image.url if obj.image else None
 
     def get_image_webp_800(self, obj):
         try:
-            return _webp_url(obj, 'image_webp_800')
+            return obj.image_webp_url
         except Exception:
-            # Fallback на обычное изображение если WebP не сгенерировалось
             return obj.image.url if obj.image else None
 
 

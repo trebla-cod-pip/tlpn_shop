@@ -74,6 +74,7 @@ class Product(models.Model):
     old_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='Старая цена')
     image = models.ImageField(upload_to='products/', verbose_name='Изображение')
     cart_image = models.ImageField(upload_to='products/cart/', blank=True, null=True, verbose_name='Изображение для корзины')
+    image_webp = models.ImageField(upload_to='products/', blank=True, null=True, verbose_name='WebP версия')
     image_webp_400 = ImageSpecField(
         source='image',
         processors=[ResizeToFit(400, 400)],
@@ -120,6 +121,25 @@ class Product(models.Model):
         if self.old_price and self.old_price > self.price:
             return int(((self.old_price - self.price) / self.old_price) * 100)
         return 0
+
+    @property
+    def image_webp_url(self):
+        """Возвращает URL WebP изображения или оригинал если WebP нет"""
+        # Сначала пробуем image_webp (ручное WebP)
+        if self.image_webp:
+            try:
+                return self.image_webp.url
+            except:
+                pass
+        
+        # Потом пробуем image_webp_800 (ImageKit кэш)
+        try:
+            return self.image_webp_800.url
+        except:
+            pass
+        
+        # Fallback на оригинал
+        return self.image.url if self.image else None
 
 
 class TelegramUser(models.Model):
