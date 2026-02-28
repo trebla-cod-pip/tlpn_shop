@@ -19,9 +19,9 @@ class Order(models.Model):
     telegram_username = models.CharField(max_length=100, blank=True, verbose_name='Telegram username')
     telegram_first_name = models.CharField(max_length=100, blank=True, verbose_name='Имя Telegram')
     telegram_last_name = models.CharField(max_length=100, blank=True, verbose_name='Фамилия Telegram')
-    
+
     # Контактные данные
-    phone = models.CharField(max_length=20, verbose_name='Телефон')
+    phone = models.CharField(max_length=25, verbose_name='Телефон')
     email = models.EmailField(blank=True, verbose_name='Email')
     preferred_contact_method = models.CharField(max_length=20, default='telegram', verbose_name='Предпочтительный способ связи')
 

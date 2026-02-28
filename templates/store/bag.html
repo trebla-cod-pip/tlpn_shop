@@ -555,9 +555,39 @@
         event.preventDefault();
 
         console.log('[TMA] submitOrder вызван');
+
+        // Валидация данных перед отправкой
+        const phone = document.getElementById('phone').value.trim();
+        const deliveryAddress = document.getElementById('delivery_address').value.trim();
+        const deliveryDate = document.getElementById('delivery_date').value;
+        const deliveryTime = document.getElementById('delivery_time').value.trim();
+        const comment = document.getElementById('comment').value.trim();
+
+        // Проверка обязательных полей
+        if (!phone) {
+            alert('Пожалуйста, введите номер телефона');
+            return;
+        }
+        if (!deliveryAddress) {
+            alert('Пожалуйста, введите адрес доставки');
+            return;
+        }
+        if (!deliveryDate) {
+            alert('Пожалуйста, выберите дату доставки');
+            return;
+        }
+
+        // Проверка телефона (маска +7 XXX XXX-XX-XX)
+        const phoneRegex = /^[\d\s\+\-\(\)]{10,25}$/;
+        if (!phoneRegex.test(phone)) {
+            alert('Пожалуйста, введите корректный номер телефона');
+            return;
+        }
+
         console.log('[TMA] orderData:', {
             items: cart.length,
-            phone: document.getElementById('phone').value,
+            phone: phone,
+            delivery_date: deliveryDate,
             telegram_user_id: user?.id,
             preferred_contact_method: selectedContactMethod
         });
@@ -574,15 +604,15 @@
                 product_id: item.id,
                 quantity: item.quantity
             })),
-            phone: document.getElementById('phone').value,
-            delivery_address: document.getElementById('delivery_address').value,
-            delivery_date: document.getElementById('delivery_date').value,
-            delivery_time: document.getElementById('delivery_time').value,
-            comment: document.getElementById('comment').value,
+            phone: phone,
+            delivery_address: deliveryAddress,
+            delivery_date: deliveryDate,
+            delivery_time: deliveryTime || 'В течение дня',
+            comment: comment,
             telegram_user_id: user?.id || null,
-            telegram_username: user?.username,
-            telegram_first_name: user?.first_name,
-            telegram_last_name: user?.last_name,
+            telegram_username: user?.username || '',
+            telegram_first_name: user?.first_name || '',
+            telegram_last_name: user?.last_name || '',
             preferred_contact_method: preferredContact
         };
 
@@ -640,7 +670,10 @@
 
         } catch (error) {
             console.error('[TMA] Error creating order:', error);
-            alert(`Ошибка: ${error.message}`);
+            const errorMsg = error.message.includes('pattern') 
+                ? 'Ошибка проверки данных. Проверьте правильность заполнения всех полей.'
+                : `Ошибка: ${error.message}`;
+            alert(errorMsg);
 
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');

@@ -85,11 +85,6 @@ def sync_cart_session(request):
     return JsonResponse({'status': 'ok', 'items': len(cart_items), 'total': total})
 
 
-def favorites(request):
-    """Избранное"""
-    return render(request, 'store/favorites.html')
-
-
 def profile(request):
     """Профиль"""
     return render(request, 'store/profile.html')

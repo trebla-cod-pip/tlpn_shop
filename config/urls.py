@@ -27,7 +27,6 @@ urlpatterns = [
     path('bag/', views.bag, name='bag'),
     path('order-success/', views.order_success, name='order_success'),
     path('cart-sync/', views.sync_cart_session, name='cart_sync'),
-    path('favorites/', views.favorites, name='favorites'),
     path('profile/', views.profile, name='profile'),
     path('api/', include('store.urls')),
     path('analytics/', include('analytics.urls')),

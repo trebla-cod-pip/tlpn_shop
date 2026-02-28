@@ -13,9 +13,9 @@ class OrderCreateSerializer(serializers.Serializer):
     """Сериалайзер для создания заказа"""
     # Товары
     items = OrderItemSerializer(many=True)
-    
+
     # Контактные данные
-    phone = serializers.CharField(max_length=20)
+    phone = serializers.CharField(max_length=25)
     email = serializers.EmailField(required=False, allow_blank=True)
     
     # Доставка

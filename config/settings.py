@@ -32,12 +32,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-n8nggd!y%!q*io0@@7jnuc)3qe
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'tlpn.shop,www.tlpn.shop,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'tlpn.shop,www.tlpn.shop,localhost').split(',')
 
 # Telegram settings
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
-TELEGRAM_WEBAPP_URL = os.getenv('TELEGRAM_WEBAPP_URL', 'http://localhost:8000')
-TELEGRAM_ADMIN_ID = os.getenv('TELEGRAM_ADMIN_ID', '')  # ID админа для уведомлений
+TELEGRAM_BOT_TOKEN = '8731264310:AAFHZh55HF5nGdNL8oprvitY8W8srs3II_s'
+TELEGRAM_WEBAPP_URL = 'tlpn.shop'
+TELEGRAM_ADMIN_ID = '645419280'  # ID админа для уведомлений
 
 # REST Framework
 REST_FRAMEWORK = {
@@ -107,7 +107,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.getenv('DB_PATH', str(BASE_DIR / 'db.sqlite3')),
+        'NAME': "/opt/db/db.sqlite3",
     }
 }
 
