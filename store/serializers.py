@@ -30,6 +30,16 @@ def _webp_url(obj, attr):
         return None
 
 
+def _safe_image_url(obj):
+    """Безопасное получение URL изображения"""
+    if not obj.image:
+        return None
+    try:
+        return obj.image.url
+    except (FileNotFoundError, OSError, ValueError):
+        return None
+
+
 class CategorySerializer(serializers.ModelSerializer):
     """Сериалайзер для категорий"""
     products_count = serializers.SerializerMethodField()
@@ -48,8 +58,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
     tags_list = serializers.SerializerMethodField()
-    discount = serializers.ReadOnlyField()
-    image_webp_url = serializers.ReadOnlyField()
+    discount = serializers.SerializerMethodField()
+    image_webp_url = serializers.SerializerMethodField()
     image_webp_400 = serializers.SerializerMethodField()
     image_webp_800 = serializers.SerializerMethodField()
 
@@ -68,24 +78,45 @@ class ProductListSerializer(serializers.ModelSerializer):
             return [tag.strip() for tag in obj.tags.split(',')]
         return []
 
+    def get_discount(self, obj):
+        try:
+            return obj.discount
+        except Exception:
+            return 0
+
     def get_image_webp_url(self, obj):
-        return obj.image_webp_url
+        """Безопасное получение WebP URL"""
+        if not obj.image:
+            return None
+        try:
+            # Пробуем получить image_webp_800
+            if hasattr(obj, 'image_webp_800') and obj.image_webp_800:
+                try:
+                    url = obj.image_webp_800.url
+                    if url:
+                        return url
+                except Exception:
+                    pass
+            # Fallback на оригинал
+            return obj.image.url
+        except Exception:
+            return None
 
     def get_image_webp_400(self, obj):
         try:
-            if obj.image_webp_url:
-                return obj.image_webp_url
+            if obj.image_webp_400:
+                return obj.image_webp_400.url
         except Exception:
             pass
-        return obj.image.url if obj.image else None
+        return _safe_image_url(obj)
 
     def get_image_webp_800(self, obj):
         try:
-            if obj.image_webp_url:
-                return obj.image_webp_url
+            if obj.image_webp_800:
+                return obj.image_webp_800.url
         except Exception:
             pass
-        return obj.image.url if obj.image else None
+        return _safe_image_url(obj)
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
