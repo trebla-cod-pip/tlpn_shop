@@ -42,6 +42,23 @@
             </div>
         </div>
 
+        <!-- Delivery Info Card -->
+        <div class="delivery-info" style="background: linear-gradient(135deg, var(--foreground) 0%, #333 100%); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 48px; color: var(--background);">
+            <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; text-align: center;">🚚 Доставка</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: var(--radius-md);">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🏪</div>
+                    <div style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">Самовывоз</div>
+                    <div style="font-size: 16px; font-weight: 500;">ул. Каштановая 9</div>
+                </div>
+                <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: var(--radius-md);">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+                    <div style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">Доставка до подъезда</div>
+                    <div style="font-size: 16px; font-weight: 500;">от {{ FREE_DELIVERY_QUANTITY|default:35 }} шт.</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Products Table -->
         <div class="stats-table" style="background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 48px;">
             <div class="table-header" style="padding: 20px 24px; background: var(--input); border-bottom: 1px solid var(--border);">
@@ -67,9 +84,13 @@
                             <td style="padding: 16px 24px;">
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     {% if stat.product__cart_image %}
-                                    <img src="{{ stat.product__cart_image.url }}" alt="{{ stat.product__name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);">
+                                    <img src="/media/{{ stat.product__cart_image }}" alt="{{ stat.product__name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);" onerror="this.style.display='none'">
                                     {% elif stat.product__image %}
-                                    <img src="{{ stat.product__image.url }}" alt="{{ stat.product__name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);">
+                                    <img src="/media/{{ stat.product__image }}" alt="{{ stat.product__name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);" onerror="this.style.display='none'">
+                                    {% else %}
+                                    <div style="width: 48px; height: 48px; background: var(--muted); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                                        <svg class="icon" style="width: 24px; height: 24px; color: var(--muted-foreground);"><use href="#icon-shopping-bag"></use></svg>
+                                    </div>
                                     {% endif %}
                                     <div>
                                         <div style="font-size: 15px; font-weight: 500; margin-bottom: 4px;">{{ stat.product__name }}</div>
@@ -95,9 +116,13 @@
                     {% for stat in stats %}
                     <div class="mobile-card" style="background: var(--muted); border-radius: var(--radius-md); padding: 16px; display: flex; gap: 16px;">
                         {% if stat.product__cart_image %}
-                        <img src="{{ stat.product__cart_image.url }}" alt="{{ stat.product__name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;">
+                        <img src="/media/{{ stat.product__cart_image }}" alt="{{ stat.product__name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;" onerror="this.style.display='none'">
                         {% elif stat.product__image %}
-                        <img src="{{ stat.product__image.url }}" alt="{{ stat.product__name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;">
+                        <img src="/media/{{ stat.product__image }}" alt="{{ stat.product__name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;" onerror="this.style.display='none'">
+                        {% else %}
+                        <div style="width: 80px; height: 80px; background: var(--muted); border-radius: var(--radius-md); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                            <svg class="icon" style="width: 40px; height: 40px; color: var(--muted-foreground);"><use href="#icon-shopping-bag"></use></svg>
+                        </div>
                         {% endif %}
                         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
                             <div style="font-size: 15px; font-weight: 500; margin-bottom: 8px;">{{ stat.product__name }}</div>
@@ -126,6 +151,10 @@
         <a href="/" class="nav-item">
             <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
             <span>Главная</span>
+        </a>
+        <a href="/delivery/" class="nav-item">
+            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-delivery"></use></svg>
+            <span>Доставка</span>
         </a>
         <a href="/bag/" class="nav-item">
             <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>

@@ -138,6 +138,18 @@ def order_stats(request):
         'total_orders': total_orders,
         'total_items': total_items,
         'total_revenue': total_revenue,
+        'FREE_DELIVERY_QUANTITY': 35,
     }
 
     return render(request, 'config/order_stats.html', context)
+
+
+def delivery_info(request):
+    """
+    Страница с информацией о доставке
+    """
+    context = {
+        'PICKUP_ADDRESS': 'ул. Каштановая 9',
+        'FREE_DELIVERY_QUANTITY': 35,
+    }
+    return render(request, 'config/delivery.html', context)

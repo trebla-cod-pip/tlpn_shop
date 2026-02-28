@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from store import views
 from config.sitemap import StaticViewSitemap, ProductSitemap, CategorySitemap
-from config.views import robots, order_stats
+from config.views import robots, order_stats, delivery_info
 
 sitemaps = {
     'static': StaticViewSitemap,
@@ -34,6 +34,7 @@ urlpatterns = [
     path('robots.txt', robots, name='robots'),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('stats/', order_stats, name='order_stats'),  # Статистика заказов
+    path('delivery/', delivery_info, name='delivery'),  # Информация о доставке
     path('', views.home, name='home'),
     path('item/<slug:slug>/', views.item, name='item'),
     path('bag/', views.bag, name='bag'),
