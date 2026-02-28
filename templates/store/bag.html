@@ -804,6 +804,21 @@
         // Определяем предпочтительный способ связи
         let preferredContact = selectedContactMethod || 'telegram';
 
+        // Добавляем комментарий о способе связи
+        let commentWithContact = comment || '';
+        if (preferredContact === 'telegram') {
+            const contactInfo = user.username 
+                ? `@${user.username}` 
+                : `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram';
+            commentWithContact = commentWithContact 
+                ? `${commentWithContact}\n\n💬 Предпочтительный способ связи: Telegram (${contactInfo})`
+                : `💬 Предпочтительный способ связи: Telegram (${contactInfo})`;
+        } else {
+            commentWithContact = commentWithContact 
+                ? `${commentWithContact}\n\n💬 Предпочтительный способ связи: Телефон (${phone})`
+                : `💬 Предпочтительный способ связи: Телефон (${phone})`;
+        }
+
         const orderData = {
             items: cart.map(item => ({
                 product_id: item.id,
@@ -813,7 +828,7 @@
             delivery_address: deliveryAddress,
             delivery_date: deliveryDate,
             delivery_time: deliveryTime || 'В течение дня',
-            comment: comment,
+            comment: commentWithContact,
             telegram_user_id: user?.id || null,
             telegram_username: normalizedUsername,
             telegram_first_name: user?.first_name || '',
