@@ -16,14 +16,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def imagekit_file_exists(imagekit_file):
-    """Проверяет существует ли файл ImageKit"""
+def force_generate_webp(imagekit_field):
+    """Принудительная генерация WebP с удалением старого файла"""
+    if not imagekit_field:
+        return False
+    
     try:
-        if not imagekit_file:
-            return False
-        # Проверяем через storage
-        return imagekit_file.storage.exists(imagekit_file.name)
-    except Exception:
+        # Получаем путь к файлу
+        file_path = imagekit_field.name
+        
+        # Если файл существует - удаляем
+        if imagekit_field.storage.exists(file_path):
+            imagekit_field.storage.delete(file_path)
+        
+        # Генерируем заново
+        imagekit_field.generate()
+        
+        # Проверяем что сгенерировалось
+        return imagekit_field.storage.exists(file_path)
+    except Exception as e:
+        logger.error(f"Ошибка генерации WebP: {e}")
         return False
 
 
@@ -41,9 +53,14 @@ class Command(BaseCommand):
             action='store_true',
             help='Принудительная генерация без подтверждения',
         )
+        parser.add_argument(
+            '--regenerate',
+            action='store_true',
+            help='Удалить старые и сгенерировать заново',
+        )
 
     def handle(self, *args, **options):
-        regenerate_all = options['all']
+        regenerate_all = options['all'] or options['regenerate']
         force = options['force']
 
         # Получаем все товары с изображениями
@@ -68,25 +85,33 @@ class Command(BaseCommand):
             self.stdout.write(f'[{i}/{total_count}] {product.name}...', ending=' ')
 
             try:
-                # Генерируем image_webp_400
-                generated_400 = False
-                exists_400 = imagekit_file_exists(product.image_webp_400)
-                if regenerate_all or not exists_400:
-                    product.image_webp_400.generate()
-                    generated_400 = True
+                generated = False
+                
+                # Если --regenerate - удаляем старые и генерируем заново
+                if regenerate_all:
+                    gen_400 = force_generate_webp(product.image_webp_400)
+                    gen_800 = force_generate_webp(product.image_webp_800)
+                    generated = gen_400 or gen_800
+                else:
+                    # Просто генерируем если нет
+                    try:
+                        if not product.image_webp_400.storage.exists(product.image_webp_400.name):
+                            product.image_webp_400.generate()
+                            generated = True
+                        if not product.image_webp_800.storage.exists(product.image_webp_800.name):
+                            product.image_webp_800.generate()
+                            generated = True
+                    except:
+                        # Если ошибка при проверке - генерируем принудительно
+                        product.image_webp_400.generate()
+                        product.image_webp_800.generate()
+                        generated = True
 
-                # Генерируем image_webp_800
-                generated_800 = False
-                exists_800 = imagekit_file_exists(product.image_webp_800)
-                if regenerate_all or not exists_800:
-                    product.image_webp_800.generate()
-                    generated_800 = True
-
-                if generated_400 or generated_800:
+                if generated:
                     self.stdout.write(self.style.SUCCESS('✅'))
                     success_count += 1
                 else:
-                    self.stdout.write(self.style.WARNING('⏭️ (уже существует)'))
+                    self.stdout.write(self.style.WARNING('⏭️'))
                     skipped_count += 1
 
             except Exception as e:
