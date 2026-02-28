@@ -259,7 +259,6 @@
 
         function initTelegramWebApp() {
             if (!window.Telegram || !window.Telegram.WebApp) {
-                console.log('[TMA] Telegram WebApp не доступен');
                 return;
             }
 
@@ -276,15 +275,6 @@
                 document.documentElement.style.setProperty('--card', '#2c2c2e');
             }
 
-            // Логируем данные для отладки
-            console.log('[TMA] Инициализация:', {
-                version: tg.version,
-                platform: tg.platform,
-                colorScheme: tg.colorScheme,
-                hasUser: !!tg.initDataUnsafe?.user,
-                userId: tg.initDataUnsafe?.user?.id,
-            });
-
             // Сохраняем данные пользователя
             saveTelegramUser();
         }
@@ -292,11 +282,8 @@
         function saveTelegramUser() {
             const user = tg.initDataUnsafe?.user;
             if (!user?.id) {
-                console.log('[TMA] Нет данных пользователя');
                 return;
             }
-
-            console.log('[TMA] Сохранение пользователя:', user);
 
             fetch('/telegram/save-user/', {
                 method: 'POST',
@@ -308,7 +295,7 @@
             })
             .then(r => r.json())
             .then(data => {
-                console.log('[TMA] User saved:', data);
+                // Пользователь сохранён
             })
             .catch(err => console.error('[TMA] Save error:', err));
         }
@@ -325,14 +312,11 @@
 
         function initExternalScripts() {
             // Загружаем Telegram WebApp скрипт сразу для всех
-            // TMA определится автоматически внутри скрипта
             const script = document.createElement('script');
             script.src = 'https://telegram.org/js/telegram-web-app.js';
             script.async = true;
             script.onload = initTelegramWebApp;
             document.head.appendChild(script);
-            
-            console.log('[TMA] Загрузка Telegram WebApp скрипта...');
         }
 
         window.dataLayer = window.dataLayer || [];

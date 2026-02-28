@@ -283,11 +283,8 @@
 
     async function saveTelegramUserProfile(initData, tgUser) {
         if (!tgUser?.id) {
-            console.warn('[TMA bag.html] Нет user.id для сохранения');
             return;
         }
-        
-        console.log('[TMA bag.html] Сохранение профиля на сервере:', tgUser);
         
         try {
             const response = await fetch('/telegram/save-user/', {
@@ -311,22 +308,17 @@
             }
             
             const result = await response.json();
-            console.log('[TMA bag.html] Сервер ответил:', result);
-            
             return result;
         } catch (e) {
-            console.error('[TMA bag.html] Ошибка сохранения профиля:', e);
+            console.error('[TMA] Ошибка сохранения профиля:', e);
             throw e;
         }
     }
 
     // Инициализация Telegram WebApp
     function initTelegramUser() {
-        console.log('[TMA bag.html] Начало инициализации Telegram пользователя...');
-        
         // Проверяем, загружен ли скрипт Telegram
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.log('[TMA bag.html] Telegram WebApp скрипт ещё не загружен, ждём...');
             setTimeout(initTelegramUser, 100);
             return;
         }
@@ -337,14 +329,6 @@
 
         // Разворачиваем на весь экран
         tg.expand();
-        
-        console.log('[TMA bag.html] Telegram WebApp:', {
-            platform: tg.platform,
-            version: tg.version,
-            colorScheme: tg.colorScheme,
-            hasInitData: !!tg.initData,
-            hasUser: !!tg.initDataUnsafe?.user,
-        });
 
         // Получаем данные пользователя
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -359,12 +343,9 @@
                 is_premium: !!tgUser.is_premium,
             };
 
-            console.log('[TMA bag.html] Данные пользователя из Telegram:', user);
-
             // Читаем сохранённый профиль из localStorage
             const storedProfile = readStoredUserProfile(user.id);
             if (storedProfile && Object.keys(storedProfile).length > 0) {
-                console.log('[TMA bag.html] Восстановление профиля из localStorage:', storedProfile);
                 user = { ...user, ...storedProfile };
             }
             
@@ -375,23 +356,12 @@
             hydrateUserFromLastOrders();
             
             // Сохраняем на сервере
-            saveTelegramUserProfile(tg.initData, tgUser)
-                .then(() => {
-                    console.log('[TMA bag.html] Профиль сохранён на сервере');
-                })
-                .catch(err => {
-                    console.error('[TMA bag.html] Ошибка сохранения на сервере:', err);
-                });
-
-            console.log('[TMA bag.html] Пользователь инициализирован:', user);
+            saveTelegramUserProfile(tg.initData, tgUser);
 
             // Haptic feedback при входе
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
-        } else {
-            console.warn('[TMA bag.html] Нет данных пользователя (веб-версия или ошибка)');
-            console.log('[TMA bag.html] initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
         }
     }
 
@@ -430,11 +400,8 @@
 
     // Загрузка корзины из localStorage
     function loadCart() {
-        console.log('[TMA bag.html] loadCart вызван');
-        
         // Проверяем, загружен ли Telegram скрипт
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.log('[TMA bag.html] Telegram ещё не загружен, ждём 200мс...');
             setTimeout(loadCart, 200);
             return;
         }
@@ -971,78 +938,8 @@
         document.body.appendChild(notification);
     }
 
-    // Отладочная панель для TMA
-    function initDebugPanel() {
-        const debugPanel = document.createElement('div');
-        debugPanel.style.cssText = `
-            position: fixed;
-            bottom: 80px;
-            left: 10px;
-            background: #1a1a1a;
-            color: #00ff00;
-            padding: 12px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            max-width: 400px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            border: 1px solid #333;
-        `;
-        debugPanel.innerHTML = '<div style="font-weight: bold; margin-bottom: 8px; color: #ffff00;">🔧 TMA Debug</div><div id="tma-debug-logs"></div>';
-        document.body.appendChild(debugPanel);
-
-        const logsDiv = document.getElementById('tma-debug-logs');
-        const originalLog = console.log;
-        const originalError = console.error;
-        const originalWarn = console.warn;
-
-        function addLog(message, type = 'log') {
-            const line = document.createElement('div');
-            line.style.cssText = `
-                margin: 2px 0;
-                padding: 2px 4px;
-                white-space: pre-wrap;
-                word-break: break-word;
-                color: ${type === 'error' ? '#ff4444' : type === 'warn' ? '#ffaa00' : '#00ff00'};
-            `;
-            const timestamp = new Date().toLocaleTimeString('ru-RU');
-            line.textContent = `[${timestamp}] ${message}`;
-            logsDiv.appendChild(line);
-            logsDiv.scrollTop = logsDiv.scrollHeight;
-        }
-
-        console.log = function(...args) {
-            originalLog.apply(console, args);
-            if (args[0] && args[0].toString().includes('[TMA')) {
-                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'log');
-            }
-        };
-
-        console.error = function(...args) {
-            originalError.apply(console, args);
-            if (args[0] && args[0].toString().includes('[TMA')) {
-                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'error');
-            }
-        };
-
-        console.warn = function(...args) {
-            originalWarn.apply(console, args);
-            if (args[0] && args[0].toString().includes('[TMA')) {
-                addLog(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'warn');
-            }
-        };
-
-        addLog('Debug panel initialized', 'log');
-    }
-
     // Инициализация
-    document.addEventListener('DOMContentLoaded', () => {
-        initDebugPanel();
-        loadCart();
-    });
+    document.addEventListener('DOMContentLoaded', loadCart);
 </script>
 {% endblock %}
 

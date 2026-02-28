@@ -104,19 +104,6 @@ def telegram_auth(request):
 def telegram_save_user(request):
     """
     Сохраняет/обновляет данные пользователя Telegram
-
-    POST /telegram/save-user/
-    Body: {
-        "initData": "...",
-        "user": {
-            "id": 123456,
-            "first_name": "John",
-            "last_name": "Doe",
-            "username": "johndoe",
-            "language_code": "ru",
-            "is_premium": true
-        }
-    }
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
@@ -126,16 +113,11 @@ def telegram_save_user(request):
         init_data = data.get('initData', '')
         user_data = data.get('user', {})
 
-        logger.info(f"[TMA] Получен запрос на сохранение пользователя: {user_data.get('id')}")
-
         if not user_data.get('id'):
-            logger.warning("[TMA] Нет user.id в запросе")
             return JsonResponse({'error': 'User ID required'}, status=400)
 
-        # Импортируем модель
         from store.models import TelegramUser
 
-        # Получаем или создаём пользователя
         tg_user, created = TelegramUser.objects.get_or_create(
             telegram_id=user_data['id'],
             defaults={
@@ -147,42 +129,30 @@ def telegram_save_user(request):
             }
         )
 
-        # Если не создан — обновляем данные
         if not created:
             tg_user.update_from_telegram(user_data)
-            logger.info(f"[TMA] Обновлены данные пользователя {tg_user.telegram_id}")
-        else:
-            logger.info(f"[TMA] Создан новый пользователь {tg_user.telegram_id}")
 
         # Сохраняем chat_id из initData если есть
         if init_data:
             from urllib.parse import parse_qs
             parsed_data = {k: v[0] if len(v) == 1 else v for k, v in parse_qs(init_data).items()}
             chat_instance = parsed_data.get('chat_instance')
-            logger.info(f"[TMA] chat_instance из initData: {chat_instance}")
             
             if chat_instance and not tg_user.chat_id:
                 tg_user.chat_id = int(chat_instance)
                 tg_user.save()
-                logger.info(f"[TMA] Сохранен chat_id {tg_user.chat_id} для пользователя {tg_user.telegram_id}")
-            elif chat_instance and tg_user.chat_id:
-                logger.info(f"[TMA] chat_id уже сохранён: {tg_user.chat_id}")
 
-        result = {
+        return JsonResponse({
             'success': True,
             'user_id': tg_user.telegram_id,
             'created': created,
             'chat_id': tg_user.chat_id,
-        }
-        
-        logger.info(f"[TMA] Результат сохранения: {result}")
-        return JsonResponse(result)
+        })
 
     except json.JSONDecodeError:
-        logger.error("[TMA] Invalid JSON в запросе")
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        logger.error(f"[TMA] Ошибка сохранения пользователя Telegram: {e}", exc_info=True)
+        logger.error(f"Ошибка сохранения пользователя Telegram: {e}")
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
