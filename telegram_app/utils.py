@@ -200,22 +200,33 @@ def send_order_notification(order) -> bool:
         try:
             from store.models import TelegramUser
             tg_user = TelegramUser.objects.filter(telegram_id=order.telegram_user_id).first()
+            
+            logger.info(f"Order #{order.id}: telegram_user_id={order.telegram_user_id}")
+            logger.info(f"Order #{order.id}: найден TelegramUser: {tg_user}")
+            
+            if tg_user:
+                logger.info(f"Order #{order.id}: tg_user.chat_id={tg_user.chat_id}")
+                logger.info(f"Order #{order.id}: tg_user.username={tg_user.username}")
+                logger.info(f"Order #{order.id}: tg_user.first_name={tg_user.first_name}")
+            
             if tg_user and tg_user.chat_id:
                 user_chat_id = tg_user.chat_id
-                logger.info(f"Найден chat_id {user_chat_id} для пользователя {order.telegram_user_id}")
+                logger.info(f"Order #{order.id}: Найден chat_id {user_chat_id} для пользователя {order.telegram_user_id}")
             else:
-                logger.warning(f"Order #{order.id}: telegram_user_id={order.telegram_user_id}, но chat_id не найден")
+                logger.warning(f"Order #{order.id}: telegram_user_id={order.telegram_user_id}, но chat_id не найден "
+                              f"(tg_user={tg_user}, chat_id={tg_user.chat_id if tg_user else 'N/A'})")
         except Exception as e:
-            logger.error(f"Error getting TelegramUser for order #{order.id}: {e}")
+            logger.error(f"Order #{order.id}: Error getting TelegramUser: {e}", exc_info=True)
 
     # Отправляем пользователю
     if user_chat_id:
-        logger.info(f"Отправка сообщения пользователю в chat_id={user_chat_id}")
+        logger.info(f"Order #{order.id}: Отправка сообщения пользователю в chat_id={user_chat_id}")
+        logger.info(f"Order #{order.id}: Текст сообщения (первые 200 символов): {user_message[:200]}...")
         try:
             user_sent = send_telegram_message(user_chat_id, user_message)
-            logger.info(f"Результат отправки пользователю: {user_sent}")
+            logger.info(f"Order #{order.id}: Результат отправки пользователю: {user_sent}")
         except Exception as e:
-            logger.error(f"Ошибка отправки пользователю #{order.telegram_user_id}: {e}")
+            logger.error(f"Order #{order.id}: Ошибка отправки пользователю #{order.telegram_user_id}: {e}", exc_info=True)
     elif order.telegram_user_id:
         logger.warning(f"Order #{order.id}: не удалось отправить пользователю - нет chat_id")
     else:

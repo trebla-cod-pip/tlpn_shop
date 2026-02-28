@@ -134,10 +134,23 @@ def telegram_save_user(request):
 
         # Сохраняем chat_id для отправки уведомлений
         # Используем telegram_id как chat_id (для личных сообщений)
-        if not tg_user.chat_id or str(tg_user.chat_id).startswith('-') or len(str(tg_user.chat_id)) > 15:
-            # Если chat_id не установлен или это chat_instance (слишком большой/отрицательный)
-            # используем telegram_id
-            tg_user.chat_id = str(user_data['id'])
+        # Проверяем: если chat_id не установлен или это chat_instance (слишком большой)
+        current_chat_id = tg_user.chat_id
+        should_update = False
+        
+        if current_chat_id is None:
+            should_update = True
+            logger.info(f"chat_id не установлен для пользователя {tg_user.telegram_id}")
+        elif str(current_chat_id).startswith('-'):
+            should_update = True
+            logger.info(f"chat_id начинается с '-' (группа), заменяем для пользователя {tg_user.telegram_id}")
+        elif len(str(current_chat_id)) > 15:
+            should_update = True
+            logger.info(f"chat_id слишком длинный (chat_instance), заменяем для пользователя {tg_user.telegram_id}")
+        
+        if should_update:
+            # Сохраняем как int, т.к. поле BigIntegerField
+            tg_user.chat_id = int(user_data['id'])
             tg_user.save()
             logger.info(f"Установлен chat_id={tg_user.chat_id} для пользователя {tg_user.telegram_id}")
 
