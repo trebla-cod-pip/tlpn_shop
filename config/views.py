@@ -1,5 +1,9 @@
 from django.http import HttpResponse
 from django.conf import settings
+from django.shortcuts import render
+from django.db.models import Sum
+from orders.models import Order, OrderItem
+from store.models import Product
 
 
 def robots(request):
@@ -10,7 +14,7 @@ def robots(request):
     # Получаем домен из настроек или используем значение по умолчанию
     domain = getattr(settings, 'SITEMAP_DOMAIN', 'tlpn.shop')
     protocol = getattr(settings, 'SITEMAP_PROTOCOL', 'https')
-    
+
     lines = [
         '# robots.txt для Tulipa Shop (tlpn.shop)',
         '# Интернет-магазин тюльпанов',
@@ -101,5 +105,35 @@ def robots(request):
         f'Sitemap: {protocol}://{domain}/sitemap.xml',
         '',
     ]
-    
+
     return HttpResponse('\n'.join(lines), content_type='text/plain; charset=utf-8')
+
+
+def order_stats(request):
+    """
+    Статистика заказов: сколько всего заказано по каждому товару
+    """
+    # Группируем по товарам и суммируем количество
+    stats = OrderItem.objects.values(
+        'product_id',
+        'product__name',
+        'product__slug',
+        'product__image'
+    ).annotate(
+        total_quantity=Sum('quantity'),
+        total_revenue=Sum('total')
+    ).order_by('-total_quantity')
+
+    # Общая статистика
+    total_orders = Order.objects.count()
+    total_items = sum(item['total_quantity'] for item in stats)
+    total_revenue = sum(item['total_revenue'] or 0 for item in stats)
+
+    context = {
+        'stats': stats,
+        'total_orders': total_orders,
+        'total_items': total_items,
+        'total_revenue': total_revenue,
+    }
+
+    return render(request, 'config/order_stats.html', context)

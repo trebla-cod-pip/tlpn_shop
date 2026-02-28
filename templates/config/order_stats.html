@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Статистика заказов - Tulipa{% endblock %}
+
+{% block content %}
+<div class="app-inner">
+    <!-- Header -->
+    <header class="hdr">
+        <div class="hdr-left">
+            <div class="brand-mark">T</div>
+            <div class="brand-name">Tulipa</div>
+        </div>
+        <div class="hdr-right">
+            <a href="/admin/" class="icon-btn" style="text-decoration: none;">
+                <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-user"></use></svg>
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Page Title -->
+        <div class="page-header" style="padding: 40px 0 32px; text-align: center;">
+            <h1 class="page-title" style="font-size: 28px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 16px;">
+                Статистика заказов
+            </h1>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="stats-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 48px;">
+            <div class="stat-card" style="background: var(--input); border-radius: var(--radius-lg); padding: 24px; text-align: center;">
+                <div style="font-size: 36px; font-weight: 600; color: var(--foreground); margin-bottom: 8px;">{{ total_orders }}</div>
+                <div style="font-size: 13px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Всего заказов</div>
+            </div>
+            <div class="stat-card" style="background: var(--input); border-radius: var(--radius-lg); padding: 24px; text-align: center;">
+                <div style="font-size: 36px; font-weight: 600; color: var(--foreground); margin-bottom: 8px;">{{ total_items }}</div>
+                <div style="font-size: 13px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Всего товаров</div>
+            </div>
+            <div class="stat-card" style="background: var(--input); border-radius: var(--radius-lg); padding: 24px; text-align: center;">
+                <div style="font-size: 36px; font-weight: 600; color: var(--foreground); margin-bottom: 8px;">{{ total_revenue|floatformat:0 }} ₽</div>
+                <div style="font-size: 13px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Общая выручка</div>
+            </div>
+        </div>
+
+        <!-- Products Table -->
+        <div class="stats-table" style="background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 48px;">
+            <div class="table-header" style="padding: 20px 24px; background: var(--input); border-bottom: 1px solid var(--border);">
+                <h2 style="font-size: 18px; font-weight: 500;">Товары по количеству заказов</h2>
+            </div>
+
+            {% if stats %}
+            <div class="table-body">
+                <!-- Desktop Table -->
+                <table style="width: 100%; border-collapse: collapse; display: none;">
+                    <thead>
+                        <tr style="background: var(--muted);">
+                            <th style="padding: 12px 24px; text-align: left; font-size: 13px; font-weight: 500; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">#</th>
+                            <th style="padding: 12px 24px; text-align: left; font-size: 13px; font-weight: 500; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Товар</th>
+                            <th style="padding: 12px 24px; text-align: center; font-size: 13px; font-weight: 500; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Заказано</th>
+                            <th style="padding: 12px 24px; text-align: center; font-size: 13px; font-weight: 500; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Выручка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats %}
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 16px 24px; font-size: 14px; color: var(--muted-foreground);">{{ forloop.counter }}</td>
+                            <td style="padding: 16px 24px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    {% if stat.product__image %}
+                                    <img src="{{ stat.product__image.url }}" alt="{{ stat.product__name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);">
+                                    {% endif %}
+                                    <div>
+                                        <div style="font-size: 15px; font-weight: 500; margin-bottom: 4px;">{{ stat.product__name }}</div>
+                                        <a href="/item/{{ stat.product__slug }}/" style="font-size: 13px; color: var(--muted-foreground); text-decoration: none;">Перейти к товару →</a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 16px 24px; text-align: center;">
+                                <span style="display: inline-block; padding: 6px 16px; background: var(--secondary); color: var(--secondary-foreground); border-radius: var(--radius-xl); font-size: 14px; font-weight: 500;">
+                                    {{ stat.total_quantity }} шт.
+                                </span>
+                            </td>
+                            <td style="padding: 16px 24px; text-align: center; font-size: 15px; font-weight: 500; color: var(--foreground);">
+                                {{ stat.total_revenue|floatformat:0 }} ₽
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Mobile Cards -->
+                <div class="mobile-cards" style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+                    {% for stat in stats %}
+                    <div class="mobile-card" style="background: var(--muted); border-radius: var(--radius-md); padding: 16px; display: flex; gap: 16px;">
+                        {% if stat.product__image %}
+                        <img src="{{ stat.product__image.url }}" alt="{{ stat.product__name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-md); flex-shrink: 0;">
+                        {% endif %}
+                        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                            <div style="font-size: 15px; font-weight: 500; margin-bottom: 8px;">{{ stat.product__name }}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 14px; color: var(--muted-foreground);">{{ stat.total_quantity }} шт.</span>
+                                <span style="font-size: 15px; font-weight: 500; color: var(--foreground);">{{ stat.total_revenue|floatformat:0 }} ₽</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 60px 24px; text-align: center;">
+                <svg class="icon" style="width: 64px; height: 64px; color: var(--muted-foreground); margin-bottom: 16px;"><use href="#icon-shopping-bag"></use></svg>
+                <p style="font-size: 16px; color: var(--muted-foreground);">Пока нет заказов</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+        <a href="/" class="nav-item">
+            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
+            <span>Главная</span>
+        </a>
+        <a href="/bag/" class="nav-item">
+            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>
+            <span>Корзина</span>
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (min-width: 768px) {
+        .mobile-cards {
+            display: none !important;
+        }
+        table {
+            display: table !important;
+        }
+    }
+    @media (max-width: 767px) {
+        table {
+            display: none !important;
+        }
+        .mobile-cards {
+            display: flex !important;
+        }
+    }
+</style>
+{% endblock %}
