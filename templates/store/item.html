@@ -66,6 +66,10 @@
 </div>
 {% endblock %}
 
+{% block extra_head %}
+<link rel="preload" as="image" fetchpriority="high" id="preload-hero-image" imagesrcset="" imagesizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" type="image/webp">
+{% endblock %}
+
 {% block extra_js %}
 <script>
     let quantity = 1;
@@ -74,6 +78,14 @@
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const slug = pathParts[pathParts.length - 1];
     console.log('Product slug:', slug);
+
+    // Функция для определения оптимального размера изображения
+    function getImageSize() {
+        const width = window.innerWidth || 375;
+        if (width <= 480) return 400;
+        if (width <= 768) return 800;
+        return 1200;
+    }
 
     // Загрузка данных товара
     async function loadProduct() {
@@ -87,9 +99,26 @@
             console.log('Product loaded:', response);
             product = response;
 
+            // Определяем оптимальный размер
+            const size = getImageSize();
+            const imageSrc = response.image_webp_800 || response.image_webp_400 || response.image || 'https://via.placeholder.com/400x500';
+            
+            // Обновляем preload перед установкой src
+            const preloadLink = document.getElementById('preload-hero-image');
+            if (preloadLink) {
+                preloadLink.href = imageSrc;
+                preloadLink.imagesrcset = `${imageSrc} ${size}w`;
+                preloadLink.imagesizes = `${size}px`;
+            }
+
             // Заполняем данные
-            document.getElementById('product-image').src = product.image || 'https://via.placeholder.com/400x500';
-            document.getElementById('product-image').alt = product.name;
+            const imgElement = document.getElementById('product-image');
+            imgElement.src = imageSrc;
+            imgElement.alt = product.name;
+            imgElement.loading = 'eager';
+            imgElement.fetchpriority = 'high';
+            imgElement.setAttribute('decoding', 'async');
+            
             document.getElementById('product-title').textContent = product.name;
             document.getElementById('product-price').textContent = `${product.price} ₽`;
             document.getElementById('product-description').textContent = product.description;

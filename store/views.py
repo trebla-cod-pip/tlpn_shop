@@ -128,23 +128,40 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
+
         # Фильтр по категории через slug
         category_slug = self.request.query_params.get('category', None)
         if category_slug:
             queryset = queryset.filter(category__slug=category_slug)
-        
+
         # Фильтр по тегам
         tag = self.request.query_params.get('tag', None)
         if tag:
             queryset = queryset.filter(tags__icontains=tag)
-        
+
         # Только рекомендуемые
         featured = self.request.query_params.get('featured', None)
         if featured == 'true':
             queryset = queryset.filter(is_featured=True)
-        
+
         return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        """Детальный просмотр товара с оптимизацией N+1 запросов"""
+        instance = self.get_object()
+        
+        # Предзагружаем связанные товары из той же категории (4 шт.)
+        # Это позволяет избежать N+1 запросов при сериализации
+        related_products = Product.objects.filter(
+            category=instance.category,
+            is_active=True
+        ).select_related('category').exclude(id=instance.id)[:4]
+        
+        # Сохраняем в instance для использования в serializer
+        instance._prefetched_related_products = related_products
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def featured(self, request):

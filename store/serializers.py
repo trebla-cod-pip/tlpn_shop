@@ -99,11 +99,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         return []
 
     def get_related_products(self, obj):
-        """Похожие товары из той же категории"""
-        related = Product.objects.filter(
-            category=obj.category,
-            is_active=True
-        ).exclude(id=obj.id)[:4]
+        """Похожие товары из той же категории (использует prefetch_related из views)"""
+        # Если related_products_queryset уже установлен в context (из views), используем его
+        # Это позволяет избежать N+1 запросов благодаря prefetch_related в views
+        related = getattr(obj, '_prefetched_related_products', None)
+        if related is None:
+            # Fallback: делаем запрос (будет N+1, если views не передал queryset)
+            related = Product.objects.filter(
+                category=obj.category,
+                is_active=True
+            ).exclude(id=obj.id)[:4]
         data = ProductListSerializer(related, many=True).data
         return data
 
