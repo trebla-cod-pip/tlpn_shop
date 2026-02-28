@@ -158,18 +158,34 @@ def send_order_notification(order) -> bool:
     user_sent = False
     admin_sent = False
 
+    # Получаем chat_id пользователя из TelegramUser
+    user_chat_id = None
     if order.telegram_user_id:
-        user_sent = send_telegram_message(order.telegram_user_id, user_message)
+        try:
+            from store.models import TelegramUser
+            tg_user = TelegramUser.objects.filter(telegram_id=order.telegram_user_id).first()
+            if tg_user and tg_user.chat_id:
+                user_chat_id = tg_user.chat_id
+                logger.info(f"Found chat_id {user_chat_id} for user {order.telegram_user_id}")
+            else:
+                logger.warning(f"Order #{order.id}: telegram_user_id={order.telegram_user_id}, but no chat_id found (tg_user={bool(tg_user)}, chat_id={tg_user.chat_id if tg_user else 'N/A'})")
+        except Exception as e:
+            logger.error(f"Error getting TelegramUser for order #{order.id}: {e}")
+
+    if user_chat_id:
+        user_sent = send_telegram_message(user_chat_id, user_message)
+        logger.info(f"User notification {'sent' if user_sent else 'failed'} to chat_id {user_chat_id}")
     else:
-        logger.warning("Order #%s has no telegram_user_id", order.id)
+        logger.warning(f"Order #{order.id}: cannot send user notification - no chat_id")
 
     admin_chat_id = _clean_text(getattr(settings, "TELEGRAM_ADMIN_ID", ""))
     if admin_chat_id:
-        admin_sent = send_telegram_message(admin_chat_id, admin_message)
+        admin_sent = send_telegram_message(int(admin_chat_id), admin_message)
+        logger.info(f"Admin notification {'sent' if admin_sent else 'failed'} to chat_id {admin_chat_id}")
     else:
         logger.warning("TELEGRAM_ADMIN_ID is empty")
 
-    need_user = bool(order.telegram_user_id)
+    need_user = bool(user_chat_id)
     need_admin = bool(admin_chat_id)
 
     # Success means all configured recipients were delivered.

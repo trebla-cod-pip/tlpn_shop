@@ -104,7 +104,7 @@ def telegram_auth(request):
 def telegram_save_user(request):
     """
     Сохраняет/обновляет данные пользователя Telegram
-    
+
     POST /telegram/save-user/
     Body: {
         "initData": "...",
@@ -120,18 +120,18 @@ def telegram_save_user(request):
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
         init_data = data.get('initData', '')
         user_data = data.get('user', {})
-        
+
         if not user_data.get('id'):
             return JsonResponse({'error': 'User ID required'}, status=400)
-        
+
         # Импортируем модель
         from store.models import TelegramUser
-        
+
         # Получаем или создаём пользователя
         tg_user, created = TelegramUser.objects.get_or_create(
             telegram_id=user_data['id'],
@@ -143,11 +143,11 @@ def telegram_save_user(request):
                 'is_premium': user_data.get('is_premium', False),
             }
         )
-        
+
         # Если не создан — обновляем данные
         if not created:
             tg_user.update_from_telegram(user_data)
-        
+
         # Сохраняем chat_id из initData если есть
         if init_data:
             from urllib.parse import parse_qs
@@ -156,13 +156,15 @@ def telegram_save_user(request):
             if chat_instance and not tg_user.chat_id:
                 tg_user.chat_id = int(chat_instance)
                 tg_user.save()
-        
+                logger.info(f"Сохранен chat_id {tg_user.chat_id} для пользователя {tg_user.telegram_id}")
+
         return JsonResponse({
             'success': True,
             'user_id': tg_user.telegram_id,
             'created': created,
+            'chat_id': tg_user.chat_id,
         })
-        
+
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
