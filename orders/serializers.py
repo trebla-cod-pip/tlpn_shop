@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from orders.models import Order, OrderItem
 from store.models import Product
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Минимальное количество товаров в заказе
 MIN_ORDER_QUANTITY = 9
