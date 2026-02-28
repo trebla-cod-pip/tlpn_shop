@@ -71,14 +71,14 @@ class OrderCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        
+
         # Создаём заказ
         order = Order.objects.create(
             **validated_data,
             total_amount=0  # Будет обновлено ниже
         )
-        
-        # Создаём товары заказа
+
+        # Создаём товары заказа и списываем со склада
         total = 0
         for item in items_data:
             order_item = OrderItem.objects.create(
@@ -89,11 +89,17 @@ class OrderCreateSerializer(serializers.Serializer):
                 total=item['price'] * item['quantity']
             )
             total += order_item.total
-        
+            
+            # Списываем товар со склада
+            product = item['product']
+            product.stock = max(0, product.stock - item['quantity'])
+            product.save()
+            logger.info(f"Списано {item['quantity']} шт. товара '{product.name}'. Остаток: {product.stock} шт.")
+
         # Обновляем общую сумму
         order.total_amount = total
         order.save()
-        
+
         return order
 
 
