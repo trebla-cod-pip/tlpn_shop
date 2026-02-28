@@ -1,0 +1,339 @@
+<div
+  class="export-wrapper"
+  style="
+    width: 1440px;
+    min-height: 812px;
+    position: relative;
+    font-family: var(--font-family-body);
+    background-color: var(--background);
+  "
+>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=Geist:wght@100;200;300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Nunito:wght@200;300;400;500;600;700;800;900&family=PT+Serif:wght@400;700&family=Roboto+Slab:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Shantell+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <html>
+    <head>
+      <style id="base-styles">
+        :root {
+          --background: #ffffff;
+          --foreground: #000000;
+          --muted: #f5f5f5;
+          --muted-foreground: #737373;
+          --border: #e5e5e5;
+          --primary: #000000;
+          --primary-foreground: #ffffff;
+          --radius-sm: 4px;
+          --radius-md: 8px;
+          --radius-lg: 12px;
+          --radius-xl: 24px;
+          --font-family-body:
+            system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Helvetica, Arial, sans-serif;
+        }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        .export-wrapper {
+          font-family: var(--font-family-body);
+          background: var(--background);
+          color: var(--foreground);
+          -webkit-font-smoothing: antialiased;
+        }
+        .app {
+          width: 100%;
+          max-width: 375px;
+          min-height: 100vh;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          background: var(--background);
+          position: relative;
+        }
+      </style>
+
+      <style id="header-styles">
+        .hdr {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          background: var(--background);
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+        .icon-btn {
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          border: 1px solid var(--border);
+          background: var(--background);
+        }
+        .brand-name {
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+        }
+      </style>
+
+      <style id="delivery-styles">
+        .content {
+          padding: 24px 20px 40px;
+          flex: 1;
+        }
+        .page-title {
+          font-size: 32px;
+          font-weight: 400;
+          letter-spacing: -0.5px;
+          margin-bottom: 32px;
+        }
+        .delivery-option {
+          display: flex;
+          gap: 16px;
+          padding: 24px 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .delivery-option:first-of-type {
+          padding-top: 0;
+        }
+        .d-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: var(--muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .d-info {
+          display: flex;
+          flex-direction: column;
+        }
+        .d-title {
+          font-size: 16px;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+        .d-desc {
+          font-size: 14px;
+          color: var(--muted-foreground);
+          line-height: 1.5;
+          margin-bottom: 12px;
+        }
+        .d-price {
+          font-size: 15px;
+          font-weight: 500;
+        }
+        .image-container {
+          margin: 32px 0;
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: var(--muted);
+        }
+        .image-container img {
+          width: 100%;
+          height: auto;
+          display: block;
+          object-fit: cover;
+        }
+        .info-section {
+          margin-top: 40px;
+        }
+        .info-title {
+          font-size: 18px;
+          font-weight: 500;
+          margin-bottom: 16px;
+        }
+        .info-text {
+          font-size: 15px;
+          color: var(--muted-foreground);
+          line-height: 1.6;
+          margin-bottom: 32px;
+        }
+        .support-btn {
+          width: 100%;
+          padding: 18px;
+          background: var(--muted);
+          color: var(--foreground);
+          border: none;
+          border-radius: var(--radius-xl);
+          font-size: 15px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="app">
+        <header class="hdr">
+          <div class="icon-btn" data-media-type="banani-button">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <iconify-icon
+                icon="lucide:chevron-left"
+                style="font-size: 20px; color: var(--foreground)"
+              ></iconify-icon>
+            </div>
+          </div>
+          <div class="brand-name">Tulipa</div>
+          <div class="icon-btn" data-media-type="banani-button">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <iconify-icon
+                icon="lucide:shopping-bag"
+                style="font-size: 20px; color: var(--foreground)"
+              ></iconify-icon>
+            </div>
+          </div>
+        </header>
+
+        <main class="content">
+          <h1 class="page-title">Доставка</h1>
+
+          <div class="delivery-option" data-media-type="banani-button">
+            <div class="d-icon">
+              <div
+                style="
+                  width: 24px;
+                  height: 24px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <iconify-icon
+                  icon="lucide:truck"
+                  style="font-size: 24px; color: var(--foreground)"
+                ></iconify-icon>
+              </div>
+            </div>
+            <div class="d-info">
+              <h2 class="d-title">Курьерская доставка</h2>
+              <p class="d-desc">
+                Бережная доставка по городу лично в руки. В течение 2-х часов
+                после сборки букета.
+              </p>
+              <span class="d-price">от 500 ₽</span>
+            </div>
+          </div>
+
+          <div class="delivery-option" data-media-type="banani-button">
+            <div class="d-icon">
+              <div
+                style="
+                  width: 24px;
+                  height: 24px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <iconify-icon
+                  icon="lucide:map-pin"
+                  style="font-size: 24px; color: var(--foreground)"
+                ></iconify-icon>
+              </div>
+            </div>
+            <div class="d-info">
+              <h2 class="d-title">Самовывоз</h2>
+              <p class="d-desc">
+                Заберите заказ из нашего бутика. Мы подготовим его к вашему
+                приезду.
+              </p>
+              <span class="d-price">Бесплатно</span>
+            </div>
+          </div>
+
+          <div class="image-container">
+            <img
+              data-aspect-ratio="4:3"
+              data-query="minimalist premium floral delivery packaging craft box with white ribbon scandinavian aesthetic soft studio lighting pure white background"
+              alt="Premium packaging"
+              src="https://storage.googleapis.com/banani-generated-images/generated-images/3a8c4f9f-97c6-46aa-9a7b-85a62e1ad013.jpg"
+            />
+          </div>
+
+          <div class="info-section">
+            <h3 class="info-title">Упаковка и свежесть</h3>
+            <p class="info-text">
+              Мы гарантируем идеальное состояние цветов при доставке. Каждый
+              букет отправляется в специальном транспортировочном аквабоксе и
+              защитной коробке, оберегающей от перепадов температуры.
+            </p>
+
+            <h3 class="info-title">Анонимный подарок</h3>
+            <p class="info-text">
+              Желаете сделать сюрприз? Укажите это при оформлении заказа, и мы
+              доставим цветы инкогнито, передав получателю только ваши теплые
+              слова в фирменной открытке.
+            </p>
+          </div>
+
+          <button class="support-btn" data-media-type="banani-button">
+            Связаться с поддержкой
+          </button>
+        </main>
+      </div>
+    </body>
+  </html>
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #0b0b0b;
+      --border: #00000014;
+      --input: #f6f6f6;
+      --primary: #000000;
+      --primary-foreground: #ffffff;
+      --secondary: #f3f4f6;
+      --secondary-foreground: #0b0b0b;
+      --muted: #f8f8f9;
+      --muted-foreground: #8b8b8b;
+      --success: #e6f9f0;
+      --success-foreground: #0b6d3a;
+      --accent: #fdecef;
+      --accent-foreground: #9b2b2b;
+      --destructive: #fff1f0;
+      --destructive-foreground: #a50e0e;
+      --warning: #fff7e6;
+      --warning-foreground: #7a5a00;
+      --card: #ffffff;
+      --card-foreground: #0b0b0b;
+      --sidebar: #ffffff;
+      --sidebar-foreground: #0b0b0b;
+      --sidebar-primary: #000000;
+      --sidebar-primary-foreground: #ffffff;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      --font-family-body: Inter;
+    }
+  </style>
+</div>

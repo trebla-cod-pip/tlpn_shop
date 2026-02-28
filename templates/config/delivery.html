@@ -4,104 +4,65 @@
 {% block title %}Доставка - Tulipa{% endblock %}
 
 {% block content %}
-<div class="app-inner">
+<div class="app" style="width: 100%; max-width: 375px; min-height: 100vh; margin: 0 auto; background: var(--background);">
     <!-- Header -->
-    <header class="hdr">
-        <div class="hdr-left">
-            <div class="brand-mark">T</div>
-            <div class="brand-name">Tulipa</div>
-        </div>
+    <header class="hdr" style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--background); position: sticky; top: 0; z-index: 10;">
+        <a href="javascript:history.back()" class="icon-btn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border); background: var(--background); text-decoration: none;">
+            <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-arrow-left"></use></svg>
+        </a>
+        <div class="brand-name" style="font-size: 14px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase;">Tulipa</div>
+        <a href="/bag/" class="icon-btn" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border); background: var(--background); text-decoration: none;">
+            <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-shopping-bag"></use></svg>
+        </a>
     </header>
 
-    <div class="container">
-        <!-- Page Title -->
-        <div class="page-header" style="padding: 40px 0 32px; text-align: center;">
-            <h1 class="page-title" style="font-size: 28px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 16px;">
-                🚚 Доставка
-            </h1>
-        </div>
+    <main class="content" style="padding: 24px 20px 40px; flex: 1;">
+        <h1 class="page-title" style="font-size: 32px; font-weight: 400; letter-spacing: -0.5px; margin-bottom: 32px;">Доставка</h1>
 
         <!-- Delivery Options -->
-        <div class="delivery-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px;">
-            <!-- Pickup -->
-            <div class="delivery-card" style="background: linear-gradient(135deg, var(--foreground) 0%, #333 100%); border-radius: var(--radius-lg); padding: 40px 32px; color: var(--background); text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🏪</div>
-                <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Самовывоз</h2>
-                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 24px;">Бесплатно</div>
-                <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">📍 {{ PICKUP_ADDRESS }}</div>
-                <div style="font-size: 14px; opacity: 0.8;">Ежедневно с 9:00 до 21:00</div>
+        <div class="delivery-option" style="display: flex; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--border);">
+            <div class="d-icon" style="width: 48px; height: 48px; border-radius: 50%; background: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-delivery"></use></svg>
             </div>
-
-            <!-- Courier Delivery -->
-            <div class="delivery-card" style="background: linear-gradient(135deg, var(--foreground) 0%, #333 100%); border-radius: var(--radius-lg); padding: 40px 32px; color: var(--background); text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-                <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Доставка до подъезда</h2>
-                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 24px;">Бесплатно от {{ FREE_DELIVERY_QUANTITY }} шт.</div>
-                <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">🚚 По городу</div>
-                <div style="font-size: 14px; opacity: 0.8;">В течение дня</div>
+            <div class="d-info" style="display: flex; flex-direction: column;">
+                <h2 class="d-title" style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Курьерская доставка</h2>
+                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Бережная доставка по городу лично в руки. При заказе от 35 тюльпанов — бесплатно.</p>
+                <span class="d-price" style="font-size: 15px; font-weight: 500;">Бесплатно от 35 шт.</span>
             </div>
         </div>
 
-        <!-- Delivery Conditions -->
-        <div class="delivery-conditions" style="background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 32px; margin-bottom: 48px;">
-            <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; text-align: center;">Условия доставки</h2>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
-                <div style="padding: 20px; background: var(--muted); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 12px;">🌷</div>
-                    <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Свежие цветы</h3>
-                    <p style="font-size: 14px; color: var(--muted-foreground); line-height: 1.6;">Только свежие тюльпаны, срезанные утром в день доставки</p>
-                </div>
-                
-                <div style="padding: 20px; background: var(--muted); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 12px;">⏰</div>
-                    <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Точно в срок</h3>
-                    <p style="font-size: 14px; color: var(--muted-foreground); line-height: 1.6;">Доставим в выбранный день с 9:00 до 23:00</p>
-                </div>
-                
-                <div style="padding: 20px; background: var(--muted); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 12px;">📞</div>
-                    <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Связь с курьером</h3>
-                    <p style="font-size: 14px; color: var(--muted-foreground); line-height: 1.6;">Курьер свяжется за 30 минут до прибытия</p>
-                </div>
-                
-                <div style="padding: 20px; background: var(--muted); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 12px;">💳</div>
-                    <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Оплата при получении</h3>
-                    <p style="font-size: 14px; color: var(--muted-foreground); line-height: 1.6;">Оплатите заказ после проверки цветов</p>
-                </div>
+        <div class="delivery-option" style="display: flex; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--border);">
+            <div class="d-icon" style="width: 48px; height: 48px; border-radius: 50%; background: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-home"></use></svg>
+            </div>
+            <div class="d-info" style="display: flex; flex-direction: column;">
+                <h2 class="d-title" style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Самовывоз</h2>
+                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Заберите заказ из нашего бутика по адресу ул. Каштановая 9. Мы подготовим его к вашему приезду.</p>
+                <span class="d-price" style="font-size: 15px; font-weight: 500;">Бесплатно</span>
             </div>
         </div>
 
-        <!-- Minimum Order Info -->
-        <div class="min-order-info" style="background: var(--warning); color: var(--warning-foreground); border-radius: var(--radius-lg); padding: 24px; text-align: center; border: 1px solid var(--warning-foreground);">
-            <div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>
-            <h3 style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Минимальный заказ</h3>
-            <p style="font-size: 14px; margin-bottom: 4px;">
-                <strong>от {{ FREE_DELIVERY_QUANTITY }} штук</strong> для доставки до подъезда
+        <!-- Image -->
+        <div class="image-container" style="margin: 32px 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
+            <img src="https://storage.googleapis.com/banani-generated-images/generated-images/3a8c4f9f-97c6-46aa-9a7b-85a62e1ad013.jpg" alt="Premium packaging" style="width: 100%; height: auto; display: block; object-fit: cover;">
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section" style="margin-top: 40px;">
+            <h3 class="info-title" style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">Упаковка и свежесть</h3>
+            <p class="info-text" style="font-size: 15px; color: var(--muted-foreground); line-height: 1.6; margin-bottom: 32px;">
+                Мы гарантируем идеальное состояние цветов при доставке. Каждый букет отправляется в специальном транспортировочном аквабоксе и защитной коробке, оберегающей от перепадов температуры.
             </p>
-            <p style="font-size: 13px; opacity: 0.8;">
-                При заказе меньше — только самовывоз
+
+            <h3 class="info-title" style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">Анонимный подарок</h3>
+            <p class="info-text" style="font-size: 15px; color: var(--muted-foreground); line-height: 1.6; margin-bottom: 32px;">
+                Желаете сделать сюрприз? Укажите это при оформлении заказа, и мы доставим цветы инкогнито, передав получателю только ваши теплые слова в фирменной открытке.
             </p>
         </div>
-    </div>
+
+        <button class="support-btn" onclick="navigateTo('/profile/')" style="width: 100%; padding: 18px; background: var(--muted); color: var(--foreground); border: none; border-radius: var(--radius-xl); font-size: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 24px;">
+            Связаться с поддержкой
+        </button>
+    </main>
 </div>
-
-<!-- Bottom Navigation -->
-<nav class="bottom-nav">
-    <div class="bottom-nav-inner">
-        <a href="/" class="nav-item">
-            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
-            <span>Главная</span>
-        </a>
-        <a href="/delivery/" class="nav-item nav-item--active">
-            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-delivery"></use></svg>
-            <span>Доставка</span>
-        </a>
-        <a href="/bag/" class="nav-item">
-            <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>
-            <span>Корзина</span>
-        </a>
-    </div>
-</nav>
 {% endblock %}
