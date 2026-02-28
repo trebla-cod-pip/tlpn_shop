@@ -11,11 +11,6 @@
             <div class="brand-mark">T</div>
             <div class="brand-name">Tulipa</div>
         </div>
-        <div class="hdr-right">
-            <a href="/admin/" class="icon-btn" style="text-decoration: none;">
-                <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-user"></use></svg>
-            </a>
-        </div>
     </header>
 
     <div class="container">
@@ -39,23 +34,6 @@
             <div class="stat-card" style="background: var(--input); border-radius: var(--radius-lg); padding: 24px; text-align: center;">
                 <div style="font-size: 36px; font-weight: 600; color: var(--foreground); margin-bottom: 8px;">{{ total_revenue|floatformat:0 }} ₽</div>
                 <div style="font-size: 13px; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 1px;">Общая выручка</div>
-            </div>
-        </div>
-
-        <!-- Delivery Info Card -->
-        <div class="delivery-info" style="background: linear-gradient(135deg, var(--foreground) 0%, #333 100%); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 48px; color: var(--background);">
-            <h2 style="font-size: 20px; font-weight: 500; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 2px; text-align: center;">🚚 Доставка</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 8px;">🏪</div>
-                    <div style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">Самовывоз</div>
-                    <div style="font-size: 16px; font-weight: 500;">ул. Каштановая 9</div>
-                </div>
-                <div style="text-align: center; padding: 20px; background: rgba(255,255,255,0.1); border-radius: var(--radius-md);">
-                    <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
-                    <div style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">Доставка до подъезда</div>
-                    <div style="font-size: 16px; font-weight: 500;">от {{ FREE_DELIVERY_QUANTITY|default:35 }} шт.</div>
-                </div>
             </div>
         </div>
 
