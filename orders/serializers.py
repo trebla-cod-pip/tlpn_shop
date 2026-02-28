@@ -3,7 +3,9 @@ from orders.models import Order, OrderItem
 from store.models import Product
 
 # Минимальное количество товаров в заказе
-MIN_ORDER_QUANTITY = 10
+MIN_ORDER_QUANTITY = 9
+# Бесплатная доставка от количества
+FREE_DELIVERY_QUANTITY = 35
 
 
 class OrderItemSerializer(serializers.Serializer):
@@ -44,8 +46,9 @@ class OrderCreateSerializer(serializers.Serializer):
         total_quantity = sum(item.get('quantity', 1) for item in items)
         if total_quantity < MIN_ORDER_QUANTITY:
             raise serializers.ValidationError(
-                f"Минимальное количество товаров в заказе — {MIN_ORDER_QUANTITY} шт. "
-                f"Сейчас в корзине {total_quantity} шт."
+                f"Минимальный заказ — от {MIN_ORDER_QUANTITY} шт. "
+                f"Сейчас в корзине {total_quantity} шт. "
+                f"Доставка до двери — от {FREE_DELIVERY_QUANTITY} шт."
             )
 
         validated_items = []

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from store.models import Category, Product
+from store.models import Category, Product, TelegramUser
 from django.utils.text import slugify
 
 
@@ -23,6 +23,37 @@ def translit_slug(text):
         if char.isalnum() or char in '-_':
             result += char
     return result.strip('-')
+
+
+@admin.register(TelegramUser)
+class TelegramUserAdmin(admin.ModelAdmin):
+    """Админка для пользователей Telegram"""
+    list_display = ('telegram_id', 'username_display', 'full_name', 'chat_id', 'is_premium', 'last_seen', 'created_at')
+    list_filter = ('is_premium', 'created_at', 'last_seen')
+    search_fields = ('telegram_id', 'username', 'first_name', 'last_name')
+    readonly_fields = ('telegram_id', 'created_at', 'last_seen')
+    ordering = ('-last_seen',)
+    
+    def username_display(self, obj):
+        return f'@{obj.username}' if obj.username else '—'
+    username_display.short_description = 'Username'
+    
+    def full_name(self, obj):
+        name = f'{obj.first_name} {obj.last_name}'.strip()
+        return name if name else '—'
+    full_name.short_description = 'ФИО'
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('telegram_id', 'username', 'first_name', 'last_name', 'full_name')
+        }),
+        ('Дополнительно', {
+            'fields': ('language_code', 'is_premium', 'chat_id')
+        }),
+        ('Даты', {
+            'fields': ('created_at', 'last_seen')
+        }),
+    )
 
 
 @admin.register(Category)
