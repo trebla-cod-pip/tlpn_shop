@@ -192,13 +192,13 @@
         card.className = 'product-card';
         card.style.cssText = 'background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 8px; cursor: pointer;';
         card.onclick = () => navigateTo(`/item/${product.slug}/`);
-        
-        const tagHtml = product.tags_list?.length ? 
+
+        const tagHtml = product.tags_list?.length ?
             `<span class="product-tag" style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-xl); background: var(--secondary); color: var(--secondary-foreground);">${product.tags_list[0]}</span>` : '';
-        
-        const baseImage = product.image || 'https://via.placeholder.com/300x400';
-        const webpMobile = product.image_webp_400 || baseImage;
-        const webpDesktop = product.image_webp_800 || baseImage;
+
+        const baseImage = product.image_webp_url || product.image || 'https://via.placeholder.com/300x400';
+        const webpMobile = product.image_webp_url || baseImage;
+        const webpDesktop = product.image_webp_url || baseImage;
         card.innerHTML = `
             <div class="product-media" style="width: 100%; aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; background: var(--muted);">
                 <picture>
