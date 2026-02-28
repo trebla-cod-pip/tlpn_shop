@@ -99,15 +99,7 @@ class AnalyticsMiddleware:
         # РСЃРїРѕР»СЊР·СѓРµРј get_or_create РґР»СЏ РёР·Р±РµР¶Р°РЅРёСЏ РіРѕРЅРєРё
         session, created = TrackingSession.objects.get_or_create(
             session_key=session_key,
-            defaults={
-                'user': request.user if request.user.is_authenticated else None,
-                'ip_hash': hash_ip(self._get_client_ip(request)),
-                'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-                'device_type': detect_device_type(request.META.get('HTTP_USER_AGENT', '')),
-                **parse_user_agent(request.META.get('HTTP_USER_AGENT', '')),
-                **self._extract_utm_params(request),
-                'landing_page': request.build_absolute_uri(),
-            }
+            defaults=self._build_session_defaults(request)
         )
         
         if not created:
@@ -116,22 +108,39 @@ class AnalyticsMiddleware:
                 # РЎРµСЃСЃРёСЏ РёСЃС‚РµРєР»Р°, СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ
                 session.is_active = False
                 session.ended_at = timezone.now()
-                session.save()
+                session.save(update_fields=['is_active', 'ended_at', 'last_activity'])
                 
                 # РЎРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ СЃРµСЃСЃРёСЋ
-                session = TrackingSession.objects.create(
-                    session_key=session_key,
-                    user=request.user if request.user.is_authenticated else None,
-                    ip_hash=hash_ip(self._get_client_ip(request)),
-                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                    device_type=detect_device_type(request.META.get('HTTP_USER_AGENT', '')),
-                    **parse_user_agent(request.META.get('HTTP_USER_AGENT', '')),
-                    **self._extract_utm_params(request),
-                    landing_page=request.build_absolute_uri(),
+                new_session_key = self._rotate_session_key(request, session_key)
+                session, _ = TrackingSession.objects.get_or_create(
+                    session_key=new_session_key,
+                    defaults=self._build_session_defaults(request),
                 )
         
         return session
-    
+
+    def _build_session_defaults(self, request):
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        return {
+            'user': request.user if request.user.is_authenticated else None,
+            'ip_hash': hash_ip(self._get_client_ip(request)),
+            'user_agent': user_agent,
+            'device_type': detect_device_type(user_agent),
+            **parse_user_agent(user_agent),
+            **self._extract_utm_params(request),
+            'landing_page': request.build_absolute_uri(),
+        }
+
+    def _rotate_session_key(self, request, current_session_key):
+        request.session.cycle_key()
+        rotated_key = request.session.session_key
+        if rotated_key and rotated_key != current_session_key:
+            return rotated_key
+
+        # Fallback should fit TrackingSession.session_key max_length.
+        fingerprint = f"{current_session_key}:{timezone.now().timestamp()}".encode('utf-8')
+        return hashlib.sha256(fingerprint).hexdigest()[:64]
+
     def _extract_utm_params(self, request):
         """Извлекает UTM-параметры из запроса"""
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -195,4 +204,3 @@ class AnalyticsMiddleware:
                 'method': request.method,
             }
         )
-

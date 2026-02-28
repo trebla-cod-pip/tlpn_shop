@@ -4,6 +4,9 @@ from rest_framework.permissions import AllowAny
 from orders.models import Order
 from orders.serializers import OrderCreateSerializer, OrderSerializer
 from telegram_app.utils import send_order_notification_sync
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class OrderViewSet(
@@ -36,25 +39,29 @@ class OrderViewSet(
         return queryset
 
     def create(self, request, *args, **kwargs):
+        logger.info(f"Получен запрос на создание заказа. Данные: {request.data}")
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
+
         # Создаём заказ
         order = serializer.save()
-        
+        logger.info(f"Заказ #{order.id} успешно создан")
+
         # Отправляем уведомление в Telegram
         try:
+            logger.info(f"Отправка уведомления для заказа #{order.id}")
             send_order_notification_sync(order)
+            logger.info(f"Уведомление для заказа #{order.id} отправлено")
         except Exception as e:
             # Логгируем ошибку, но не прерываем создание заказа
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Ошибка отправки уведомления: {e}")
-        
+            logger.error(f"Ошибка отправки уведомления для заказа #{order.id}: {e}", exc_info=True)
+
         # Возвращаем данные заказа
         request.session['last_order_id'] = order.id
         response_serializer = OrderSerializer(order)
         headers = self.get_success_headers(response_serializer.data)
+        logger.info(f"Заказ #{order.id} возвращен клиенту с статусом {status.HTTP_201_CREATED}")
         return Response(
             response_serializer.data,
             status=status.HTTP_201_CREATED,

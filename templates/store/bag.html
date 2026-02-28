@@ -140,6 +140,13 @@
 
         <form id="order-form" onsubmit="submitOrder(event)">
             <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Username для Telegram - показывается только при выборе TG -->
+                <div id="username-field" style="display: none;">
+                    <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Telegram username</label>
+                    <input type="text" id="username" name="username" placeholder="@username"
+                           style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
+                </div>
+
                 <!-- Phone - always required for web -->
                 <div>
                     <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Телефон *</label>
@@ -227,21 +234,6 @@
             }
         } else {
             console.log('[TMA] Нет данных пользователя (веб-версия или ошибка)');
-        }
-    }
-
-    // Автозаполнение формы оформления
-    function fillCheckoutForm() {
-        if (!user.id) return;
-        
-        const phoneInput = document.getElementById('phone');
-        const emailInput = document.getElementById('email');
-        
-        if (phoneInput && !phoneInput.value) {
-            phoneInput.value = user.phone || '';
-        }
-        if (emailInput && !emailInput.value && user.username) {
-            emailInput.value = `${user.username}@telegram.com`;
         }
     }
 
@@ -475,6 +467,8 @@
         const contactIcon = document.getElementById('contact-icon');
         const contactValue = document.getElementById('contact-value');
         const phoneInput = document.getElementById('phone');
+        const usernameField = document.getElementById('username-field');
+        const usernameInput = document.getElementById('username');
 
         // Устанавливаем минимальную дату - сегодня + 1 день
         const tomorrow = new Date();
@@ -485,17 +479,27 @@
         // Предлагаем завтрашнюю дату по умолчанию
         document.getElementById('delivery_date').value = minDate;
 
-        // Настраиваем отображение способа связи
+        // Настраиваем отображение способа связи и полей
         if (selectedContactMethod === 'telegram') {
             contactIcon.setAttribute('icon', 'lucide:send');
             contactIcon.style.color = '#229ED9';
             contactValue.textContent = user.username
                 ? `@${user.username}`
                 : `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Telegram';
+
+            // Показываем поле username и заполняем его
+            usernameField.style.display = 'block';
+            if (user.username) {
+                usernameInput.value = user.username.startsWith('@') ? user.username : `@${user.username}`;
+            }
         } else {
             contactIcon.setAttribute('icon', 'lucide:phone');
             contactIcon.style.color = '#22c55e';
             contactValue.textContent = user.phone || document.getElementById('manual-phone')?.value || 'По телефону';
+
+            // Скрываем поле username
+            usernameField.style.display = 'none';
+            usernameInput.value = '';
         }
 
         // Телефон всегда показываем и требуем для веба
@@ -506,6 +510,9 @@
             if (manualPhone?.value) {
                 phoneInput.value = manualPhone.value;
             }
+        } else {
+            // Очищаем телефон если выбран Telegram и нет телефона в user
+            phoneInput.value = '';
         }
 
         // Время доставки - предлагаем "В течение дня"
