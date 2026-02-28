@@ -129,10 +129,22 @@ class ProductAdmin(admin.ModelAdmin):
         if not obj.image:
             return format_html('<span style="color: #999;">Нет изображения</span>')
         
-        # Просто показываем URL если файл существует
+        # Проверяем наличие URL без вызова исключения
         try:
-            url_400 = obj.image_webp_400.url if obj.image_webp_400 else None
-            url_800 = obj.image_webp_800.url if obj.image_webp_800 else None
+            url_400 = None
+            url_800 = None
+            
+            if obj.image_webp_400:
+                try:
+                    url_400 = obj.image_webp_400.url
+                except:
+                    pass
+            
+            if obj.image_webp_800:
+                try:
+                    url_800 = obj.image_webp_800.url
+                except:
+                    pass
             
             if url_400 and url_800:
                 return format_html('<span style="color: green;">✅ 400px | ✅ 800px</span>')
@@ -143,7 +155,7 @@ class ProductAdmin(admin.ModelAdmin):
             else:
                 return format_html('<span style="color: red;">❌ Не сгенерировано</span>')
         except Exception as e:
-            return format_html(f'<span style="color: red;">Ошибка: {str(e)[:50]}</span>')
+            return format_html('<span style="color: red;">Ошибка</span>')
     has_webp.short_description = 'WebP статус'
     
     def webp_status(self, obj):
@@ -153,17 +165,24 @@ class ProductAdmin(admin.ModelAdmin):
         
         try:
             status = []
+            
             if obj.image_webp_400:
-                status.append(f'✅ 400px: {obj.image_webp_400.url}')
+                try:
+                    status.append(f'✅ 400px: {obj.image_webp_400.url}')
+                except:
+                    status.append('❌ 400px: не сгенерировано')
             else:
                 status.append('❌ 400px: не сгенерировано')
                 
             if obj.image_webp_800:
-                status.append(f'✅ 800px: {obj.image_webp_800.url}')
+                try:
+                    status.append(f'✅ 800px: {obj.image_webp_800.url}')
+                except:
+                    status.append('❌ 800px: не сгенерировано')
             else:
                 status.append('❌ 800px: не сгенерировано')
             
             return format_html('<br>'.join(status))
         except Exception as e:
-            return format_html(f'<span style="color: red;">Ошибка: {e}</span>')
+            return format_html('<span style="color: red;">Ошибка</span>')
     webp_status.short_description = 'Статус генерации WebP'
