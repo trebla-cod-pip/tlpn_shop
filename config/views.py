@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum
 from orders.models import Order, OrderItem
 from store.models import Product
@@ -109,9 +110,11 @@ def robots(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain; charset=utf-8')
 
 
+@staff_member_required(login_url='/admin/login/')
 def order_stats(request):
     """
     Статистика заказов: сколько всего заказано по каждому товару
+    Доступно только суперпользователям (staff)
     """
     # Группируем по товарам и суммируем количество
     stats = OrderItem.objects.values(
