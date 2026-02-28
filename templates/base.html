@@ -448,6 +448,16 @@
 
     <noscript><div><img src="https://mc.yandex.ru/watch/107038425" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 
+    <!-- Инициализация внешних скриптов (Telegram WebApp и др.) -->
+    <script>
+        // Вызываем после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initExternalScripts);
+        } else {
+            initExternalScripts();
+        }
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

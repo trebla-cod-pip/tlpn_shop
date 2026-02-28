@@ -3,6 +3,9 @@
 
 {% block title %}Корзина - Tulipa{% endblock %}
 
+<!-- Принудительная загрузка Telegram WebApp скрипта -->
+<script src="https://telegram.org/js/telegram-web-app.js" async></script>
+
 <!-- SVG Icons Sprite -->
 <svg style="display: none;">
     <symbol id="icon-shopping-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -427,9 +430,21 @@
 
     // Загрузка корзины из localStorage
     function loadCart() {
-        initTelegramUser();
+        console.log('[TMA bag.html] loadCart вызван');
+        
+        // Проверяем, загружен ли Telegram скрипт
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            console.log('[TMA bag.html] Telegram ещё не загружен, ждём 200мс...');
+            setTimeout(loadCart, 200);
+            return;
+        }
+        
         const storedCart = localStorage.getItem('cart');
         cart = storedCart ? JSON.parse(storedCart) : [];
+        
+        // Инициализируем Telegram пользователя
+        initTelegramUser();
+        
         renderCart();
     }
 
