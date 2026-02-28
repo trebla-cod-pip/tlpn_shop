@@ -1,191 +1,181 @@
-import asyncio
+import html
 import logging
+from typing import Any
+
+import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 
-async def send_telegram_message(chat_id: int, text: str, parse_mode: str = 'HTML') -> bool:
-    """
-    Отправляет сообщение в Telegram
+def _clean_text(value: Any) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
 
-    Args:
-        chat_id: ID чата или пользователя
-        text: Текст сообщения
-        parse_mode: Режим парсинга (HTML или Markdown)
 
-    Returns:
-        True если успешно, False иначе
-    """
-    if not settings.TELEGRAM_BOT_TOKEN:
-        logger.warning("TELEGRAM_BOT_TOKEN не настроен")
+def _escape(value: Any) -> str:
+    return html.escape(_clean_text(value), quote=False)
+
+
+def _with_scheme(url: str) -> str:
+    if not url:
+        return ""
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+    return f"https://{url}"
+
+
+def send_telegram_message(chat_id: Any, text: str, parse_mode: str = "HTML") -> bool:
+    token = _clean_text(getattr(settings, "TELEGRAM_BOT_TOKEN", ""))
+    if not token:
+        logger.warning("TELEGRAM_BOT_TOKEN is empty")
         return False
 
-    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+    chat_id = _clean_text(chat_id)
+    if not chat_id:
+        logger.warning("chat_id is empty, skip telegram message")
+        return False
 
-    data = {
-        'chat_id': chat_id,
-        'text': text,
-        'parse_mode': parse_mode,
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode,
+        "disable_web_page_preview": True,
     }
 
     try:
-        import aiohttp
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=data) as response:
-                result = await response.json()
-                if response.status == 200:
-                    logger.info(f"Сообщение отправлено в Telegram: {chat_id}")
-                    return True
-                else:
-                    logger.error(f"Ошибка Telegram API ({response.status}): {result}")
-                    return False
-    except ImportError:
-        logger.error("aiohttp не установлен. Установите: pip install aiohttp")
-        return False
-    except Exception as e:
-        logger.error(f"Ошибка отправки в Telegram: {e}")
+        response = requests.post(url, json=payload, timeout=15)
+    except requests.RequestException as exc:
+        logger.error("Telegram request failed for chat_id=%s: %s", chat_id, exc)
         return False
 
-
-async def send_order_notification(order) -> bool:
-    """
-    Отправляет уведомление о заказе пользователю и админу
-    """
-    from analytics.models import TrackingEvent
-
-    logger.info(f"Начало отправки уведомления для заказа #{order.id}")
-
-    # Формируем список товаров
-    items_text = ""
-    for item in order.items.all():
-        items_text += f"• {item.product.name} x {item.quantity} — {item.total}₽\n"
-
-    # Иконка способа связи
-    contact_icon = "📱" if order.preferred_contact_method == 'phone' else "✈️"
-
-    # Формируем текст способа связи с учётом краевых случаев
-    if order.preferred_contact_method == 'phone':
-        contact_text = f"Телефон: {order.phone}"
-    else:
-        if order.telegram_username:
-            contact_text = f"Telegram: @{order.telegram_username}"
-        elif order.telegram_first_name:
-            contact_text = f"Telegram: {order.telegram_first_name} {order.telegram_last_name or ''}"
-        else:
-            contact_text = f"Telegram (ID: {order.telegram_user_id})"
-
-    # Имя клиента
-    client_name = f"{order.telegram_first_name or ''} {order.telegram_last_name or ''}".strip()
-    if not client_name:
-        client_name = f"Telegram @{order.telegram_username}" if order.telegram_username else f"Пользователь #{order.telegram_user_id}"
-
-    # Сообщение пользователю
-    user_message = f"""
-🌷 <b>Заказ #{order.id} принят!</b>
-
-Спасибо за заказ в Tulipa!
-
-📦 <b>Ваш заказ:</b>
-{items_text}
-💰 <b>Итого:</b> {order.total_amount}₽
-
-🚚 <b>Доставка:</b>
-📍 {order.delivery_address}
-📅 {order.delivery_date.strftime('%d.%m.%Y')}
-⏰ {order.delivery_time or 'В течение дня'}
-
-📞 <b>Контакты:</b>
-{order.phone}
-{contact_icon} <b>Предпочтительный способ связи:</b> {contact_text}
-
-Мы свяжемся с вами для подтверждения доставки.
-    """.strip()
-
-    # Сообщение админу
-    admin_message = f"""
-🔔 <b>Новый заказ #{order.id}!</b>
-
-👤 <b>Клиент:</b>
-• {client_name}
-• Телефон: {order.phone}
-• <b>Предпочтительный способ связи:</b> {contact_text}
-
-📦 <b>Заказ:</b>
-{items_text}
-💰 <b>Итого:</b> {order.total_amount}₽
-
-🚚 <b>Доставка:</b>
-📍 {order.delivery_address}
-📅 {order.delivery_date.strftime('%d.%m.%Y')}
-⏰ {order.delivery_time or 'В течение дня'}
-
-💬 <b>Комментарий:</b>
-{order.comment or 'Нет'}
-
-<a href='http://localhost:8000/admin/orders/order/{order.id}/change/'>Открыть в админке</a>
-    """.strip()
-
-    # Отправляем пользователю (если есть telegram_user_id)
-    user_sent = False
-    if order.telegram_user_id:
-        logger.info(f"Отправка уведомления пользователю #{order.telegram_user_id}")
-        try:
-            user_sent = await send_telegram_message(order.telegram_user_id, user_message)
-            logger.info(f"Уведомление пользователю {'отправлено' if user_sent else 'не отправлено'}")
-        except Exception as e:
-            logger.error(f"Ошибка отправки пользователю #{order.telegram_user_id}: {e}")
-    else:
-        logger.warning(f"У заказа #{order.id} нет telegram_user_id, уведомление пользователю не отправлено")
-
-    # Отправляем админу
-    admin_sent = False
-    if settings.TELEGRAM_ADMIN_ID:
-        logger.info(f"Отправка уведомления админу (ID: {settings.TELEGRAM_ADMIN_ID})")
-        try:
-            admin_sent = await send_telegram_message(
-                int(settings.TELEGRAM_ADMIN_ID),
-                admin_message
-            )
-            logger.info(f"Уведомление админу {'отправлено' if admin_sent else 'не отправлено'}")
-        except Exception as e:
-            logger.error(f"Ошибка отправки админу: {e}")
-    else:
-        logger.warning("TELEGRAM_ADMIN_ID не настроен")
-
-    # Трекаем событие purchase для аналитики
     try:
-        TrackingEvent.objects.create(
-            event_type='purchase',
-            event_data={
-                'order_id': order.id,
-                'total_amount': str(order.total_amount),
-                'items_count': order.get_items_count()
-            }
-        )
-        logger.info(f"Событие purchase сохранено для заказа #{order.id}")
-    except Exception as e:
-        logger.error(f"Ошибка трекинга purchase: {e}")
+        result = response.json()
+    except ValueError:
+        result = {"raw": response.text}
 
-    result = user_sent and admin_sent
-    logger.info(f"Результат отправки уведомлений: user={user_sent}, admin={admin_sent}, total={result}")
-    return result
+    if response.ok and result.get("ok") is True:
+        logger.info("Telegram message sent to chat_id=%s", chat_id)
+        return True
+
+    logger.error(
+        "Telegram API rejected message for chat_id=%s status=%s response=%s",
+        chat_id,
+        response.status_code,
+        result,
+    )
+    return False
+
+
+def _build_items_text(order) -> str:
+    lines = []
+    for item in order.items.all().select_related("product"):
+        product_name = _escape(getattr(item.product, "name", "Item"))
+        lines.append(f"- {product_name} x {item.quantity} - {_escape(item.total)} RUB")
+    return "\n".join(lines) or "- No items"
+
+
+def _format_contact_text(order) -> str:
+    if order.preferred_contact_method == "phone":
+        return f"Phone: {_escape(order.phone)}"
+
+    username = _clean_text(order.telegram_username).lstrip("@")
+    if username:
+        return f"Telegram: @{_escape(username)}"
+
+    full_name = _clean_text(f"{order.telegram_first_name or ''} {order.telegram_last_name or ''}")
+    if full_name:
+        return f"Telegram: {_escape(full_name)}"
+
+    if order.telegram_user_id:
+        return f"Telegram ID: {_escape(order.telegram_user_id)}"
+
+    return "Not provided"
+
+
+def _client_name(order) -> str:
+    full_name = _clean_text(f"{order.telegram_first_name or ''} {order.telegram_last_name or ''}")
+    if full_name:
+        return full_name
+
+    username = _clean_text(order.telegram_username).lstrip("@")
+    if username:
+        return f"@{username}"
+
+    if order.telegram_user_id:
+        return f"User #{order.telegram_user_id}"
+
+    return "Customer"
+
+
+def send_order_notification(order) -> bool:
+    items_text = _build_items_text(order)
+    contact_text = _format_contact_text(order)
+    client_name = _escape(_client_name(order))
+    address = _escape(order.delivery_address)
+    phone = _escape(order.phone)
+    total_amount = _escape(order.total_amount)
+    comment = _escape(order.comment or "No comment")
+    delivery_date = _escape(order.delivery_date.strftime("%d.%m.%Y"))
+    delivery_time = _escape(order.delivery_time or "During the day")
+
+    admin_base_url = _with_scheme(_clean_text(getattr(settings, "TELEGRAM_WEBAPP_URL", ""))).rstrip("/")
+    admin_link = ""
+    if admin_base_url:
+        admin_link = f"{admin_base_url}/admin/orders/order/{order.id}/change/"
+
+    user_message = (
+        f"<b>Order #{order.id} accepted</b>\n\n"
+        f"Items:\n{items_text}\n\n"
+        f"<b>Total:</b> {total_amount} RUB\n\n"
+        f"<b>Delivery:</b>\n"
+        f"{address}\n"
+        f"{delivery_date}\n"
+        f"{delivery_time}\n\n"
+        f"<b>Contact:</b>\n"
+        f"{phone}\n"
+        f"{contact_text}"
+    )
+
+    admin_message = (
+        f"<b>New order #{order.id}</b>\n\n"
+        f"<b>Client:</b> {client_name}\n"
+        f"<b>Phone:</b> {phone}\n"
+        f"<b>Preferred contact:</b> {contact_text}\n\n"
+        f"<b>Items:</b>\n{items_text}\n\n"
+        f"<b>Total:</b> {total_amount} RUB\n\n"
+        f"<b>Delivery:</b>\n"
+        f"{address}\n"
+        f"{delivery_date}\n"
+        f"{delivery_time}\n\n"
+        f"<b>Comment:</b>\n{comment}"
+    )
+    if admin_link:
+        admin_message += f"\n\n<a href='{admin_link}'>Open in admin</a>"
+
+    user_sent = False
+    admin_sent = False
+
+    if order.telegram_user_id:
+        user_sent = send_telegram_message(order.telegram_user_id, user_message)
+    else:
+        logger.warning("Order #%s has no telegram_user_id", order.id)
+
+    admin_chat_id = _clean_text(getattr(settings, "TELEGRAM_ADMIN_ID", ""))
+    if admin_chat_id:
+        admin_sent = send_telegram_message(admin_chat_id, admin_message)
+    else:
+        logger.warning("TELEGRAM_ADMIN_ID is empty")
+
+    need_user = bool(order.telegram_user_id)
+    need_admin = bool(admin_chat_id)
+
+    # Success means all configured recipients were delivered.
+    return (not need_user or user_sent) and (not need_admin or admin_sent)
 
 
 def send_order_notification_sync(order) -> bool:
-    """
-    Синхронная обёртка для отправки уведомлений
-    """
-    logger.info(f"send_order_notification_sync вызван для заказа #{order.id}")
-
-    # Проверяем, есть ли уже запущенный event loop
-    try:
-        loop = asyncio.get_running_loop()
-        # Если loop уже запущен, создаём новый в отдельном потоке
-        logger.info("Event loop уже запущен, используем run_coroutine_threadsafe")
-        future = asyncio.run_coroutine_threadsafe(send_order_notification(order), loop)
-        return future.result(timeout=10)  # Ждём максимум 10 секунд
-    except RuntimeError:
-        # Нет running loop, создаём новый
-        logger.info("Event loop не запущен, создаём новый")
-        return asyncio.run(send_order_notification(order))
+    logger.info("send_order_notification_sync called for order #%s", order.id)
+    return send_order_notification(order)

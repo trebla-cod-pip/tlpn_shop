@@ -198,6 +198,96 @@
     let total = 0;
     let user = {};
     let tgLoaded = false;
+    let userContactsLoaded = false;
+
+    function normalizeUsername(value) {
+        return (value || '').toString().trim().replace(/^@+/, '');
+    }
+
+    function getUserStorageKey(userId) {
+        return `tulpin_user_profile_${userId}`;
+    }
+
+    function readStoredUserProfile(userId) {
+        if (!userId) return {};
+        try {
+            const raw = localStorage.getItem(getUserStorageKey(userId));
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return {
+                username: normalizeUsername(parsed.username || ''),
+                phone: (parsed.phone || '').toString().trim(),
+                first_name: (parsed.first_name || '').toString().trim(),
+                last_name: (parsed.last_name || '').toString().trim(),
+            };
+        } catch (e) {
+            console.warn('[TMA] Failed to parse stored user profile:', e);
+            return {};
+        }
+    }
+
+    function saveUserProfileToStorage() {
+        if (!user?.id) return;
+        const payload = {
+            username: normalizeUsername(user.username || ''),
+            phone: (user.phone || '').toString().trim(),
+            first_name: (user.first_name || '').toString().trim(),
+            last_name: (user.last_name || '').toString().trim(),
+        };
+        localStorage.setItem(getUserStorageKey(user.id), JSON.stringify(payload));
+    }
+
+    async function hydrateUserFromLastOrders(force = false) {
+        if (!user?.id || (userContactsLoaded && !force)) return;
+
+        try {
+            const response = await fetch(`/api/orders/?telegram_user_id=${encodeURIComponent(user.id)}`);
+            if (!response.ok) return;
+
+            const payload = await response.json();
+            const orders = Array.isArray(payload)
+                ? payload
+                : (Array.isArray(payload.results) ? payload.results : []);
+
+            if (orders.length > 0) {
+                const lastOrder = orders[0];
+                if (!user.phone && lastOrder.phone) {
+                    user.phone = lastOrder.phone;
+                }
+                if (!user.username && lastOrder.telegram_username) {
+                    user.username = normalizeUsername(lastOrder.telegram_username);
+                }
+                saveUserProfileToStorage();
+            }
+        } catch (e) {
+            console.warn('[TMA] Failed to hydrate user from orders:', e);
+        } finally {
+            userContactsLoaded = true;
+        }
+    }
+
+    async function saveTelegramUserProfile(initData, tgUser) {
+        if (!tgUser?.id) return;
+        try {
+            await fetch('/telegram/save-user/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    initData: initData || '',
+                    user: {
+                        id: tgUser.id,
+                        username: tgUser.username || '',
+                        first_name: tgUser.first_name || '',
+                        last_name: tgUser.last_name || '',
+                        language_code: tgUser.language_code || '',
+                        is_premium: !!tgUser.is_premium,
+                    }
+                })
+            });
+        } catch (e) {
+            console.warn('[TMA] Failed to save telegram user profile:', e);
+        }
+    }
 
     // Инициализация Telegram WebApp
     function initTelegramUser() {
@@ -220,17 +310,22 @@
             const tgUser = tg.initDataUnsafe.user;
             user = {
                 id: tgUser.id,
-                username: tgUser.username || '',
+                username: normalizeUsername(tgUser.username || ''),
                 first_name: tgUser.first_name || '',
                 last_name: tgUser.last_name || '',
                 phone: tgUser.phone || '',
             };
 
+            user = { ...user, ...readStoredUserProfile(user.id) };
+            saveUserProfileToStorage();
+            void hydrateUserFromLastOrders();
+            void saveTelegramUserProfile(tg.initData, tgUser);
+
             console.log('[TMA] Пользователь:', user);
 
             // Haptic feedback при входе
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
         } else {
             console.log('[TMA] Нет данных пользователя (веб-версия или ошибка)');
@@ -321,8 +416,8 @@
         saveCart();
         renderCart();
         
-        if (tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('light');
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
     }
 
@@ -332,8 +427,8 @@
         saveCart();
         renderCart();
         
-        if (tg.HapticFeedback) {
-            tg.HapticFeedback.impactOccurred('medium');
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
         }
     }
 
@@ -346,7 +441,7 @@
     let selectedContactMethod = null;
 
     // Показать выбор способа связи
-    function showContactMethod() {
+    async function showContactMethod() {
         console.log('[TMA] showContactMethod вызван, user:', user, 'tgLoaded:', tgLoaded);
 
         const modal = document.getElementById('contact-method-modal');
@@ -357,6 +452,8 @@
             console.error('[TMA] Modal element not found!');
             return;
         }
+
+        await hydrateUserFromLastOrders();
 
         // Сбрасываем состояние
         selectedContactMethod = null;
@@ -426,6 +523,10 @@
             btnPhone.style.background = 'var(--foreground)';
             btnPhone.style.color = 'var(--background)';
             phoneInputContainer.style.display = 'block';
+            const manualPhone = document.getElementById('manual-phone');
+            if (manualPhone && user.phone) {
+                manualPhone.value = user.phone;
+            }
         }
         
         // Активируем кнопку "Далее"
@@ -489,9 +590,8 @@
 
             // Показываем поле username и заполняем его
             usernameField.style.display = 'block';
-            if (user.username) {
-                usernameInput.value = user.username.startsWith('@') ? user.username : `@${user.username}`;
-            }
+            const preparedUsername = normalizeUsername(user.username);
+            usernameInput.value = preparedUsername ? `@${preparedUsername}` : '';
         } else {
             contactIcon.setAttribute('icon', 'lucide:phone');
             contactIcon.style.color = '#22c55e';
@@ -569,6 +669,8 @@
         const deliveryDate = document.getElementById('delivery_date').value;
         const deliveryTime = document.getElementById('delivery_time').value.trim();
         const comment = document.getElementById('comment').value.trim();
+        const usernameInputValue = document.getElementById('username').value.trim();
+        const normalizedUsername = normalizeUsername(usernameInputValue || user?.username || '');
 
         // Проверка обязательных полей
         if (!phone) {
@@ -617,11 +719,15 @@
             delivery_time: deliveryTime || 'В течение дня',
             comment: comment,
             telegram_user_id: user?.id || null,
-            telegram_username: user?.username || '',
+            telegram_username: normalizedUsername,
             telegram_first_name: user?.first_name || '',
             telegram_last_name: user?.last_name || '',
             preferred_contact_method: preferredContact
         };
+
+        user.username = normalizedUsername;
+        user.phone = phone;
+        saveUserProfileToStorage();
 
         try {
             console.log('[TMA] Отправка запроса на /api/orders/');
@@ -740,3 +846,4 @@
     document.addEventListener('DOMContentLoaded', loadCart);
 </script>
 {% endblock %}
+
