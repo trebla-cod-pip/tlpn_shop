@@ -265,15 +265,13 @@
             tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
-            
+
             // Включаем подтверждение закрытия
             tg.enableClosingConfirmation();
 
-            if (tg.colorScheme === 'dark') {
-                document.documentElement.style.setProperty('--background', '#1c1c1d');
-                document.documentElement.style.setProperty('--foreground', '#ffffff');
-                document.documentElement.style.setProperty('--card', '#2c2c2e');
-            }
+            // Используем светлую тему всегда (независимо от темы Telegram)
+            tg.setHeaderColor('#ffffff');
+            tg.setBackgroundColor('#ffffff');
 
             // Сохраняем данные пользователя
             saveTelegramUser();

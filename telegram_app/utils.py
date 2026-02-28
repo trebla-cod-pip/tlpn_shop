@@ -202,16 +202,18 @@ def send_order_notification(order) -> bool:
             tg_user = TelegramUser.objects.filter(telegram_id=order.telegram_user_id).first()
             if tg_user and tg_user.chat_id:
                 user_chat_id = tg_user.chat_id
+                logger.info(f"Найден chat_id {user_chat_id} для пользователя {order.telegram_user_id}")
             else:
-                # Пробуем получить chat_id из строки initData (если есть)
                 logger.warning(f"Order #{order.id}: telegram_user_id={order.telegram_user_id}, но chat_id не найден")
         except Exception as e:
             logger.error(f"Error getting TelegramUser for order #{order.id}: {e}")
 
     # Отправляем пользователю
     if user_chat_id:
+        logger.info(f"Отправка сообщения пользователю в chat_id={user_chat_id}")
         try:
             user_sent = send_telegram_message(user_chat_id, user_message)
+            logger.info(f"Результат отправки пользователю: {user_sent}")
         except Exception as e:
             logger.error(f"Ошибка отправки пользователю #{order.telegram_user_id}: {e}")
     elif order.telegram_user_id:

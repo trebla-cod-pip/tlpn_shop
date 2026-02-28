@@ -138,9 +138,16 @@ def telegram_save_user(request):
             parsed_data = {k: v[0] if len(v) == 1 else v for k, v in parse_qs(init_data).items()}
             chat_instance = parsed_data.get('chat_instance')
             
-            if chat_instance and not tg_user.chat_id:
-                tg_user.chat_id = int(chat_instance)
+            logger.info(f"chat_instance из initData: {chat_instance}")
+            logger.info(f"Полный initData: {parsed_data}")
+            logger.info(f"telegram_id пользователя: {user_data.get('id')}")
+
+            if not tg_user.chat_id:
+                # Используем telegram_id как chat_id для отправки сообщений
+                # Это работает для личных сообщений с пользователем
+                tg_user.chat_id = user_data['id']
                 tg_user.save()
+                logger.info(f"Сохранен chat_id {tg_user.chat_id} для пользователя {tg_user.telegram_id}")
 
         return JsonResponse({
             'success': True,
