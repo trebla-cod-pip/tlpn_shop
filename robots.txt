@@ -1,0 +1,146 @@
+# robots.txt для Tulipa Shop (tlpn.shop)
+# Интернет-магазин тюльпанов
+# Sitemap: https://tlpn.shop/sitemap.xml
+
+# =============================================================================
+# Для всех поисковых роботов
+# =============================================================================
+User-agent: *
+
+# Разрешить индексацию публичных страниц
+Allow: /
+Allow: /item/
+Allow: /?category=
+
+# Запретить индексацию служебных разделов
+Disallow: /admin/
+Disallow: /bag/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /profile/
+Disallow: /order-success/
+Disallow: /cart-sync/
+Disallow: /favorites/
+Disallow: /api/
+Disallow: /telegram/
+Disallow: /analytics/
+Disallow: /static/
+Disallow: /media/
+
+# Запретить URL с параметрами (фильтры, сортировка, utm-метки)
+Disallow: /*?*
+Disallow: /*&*
+Disallow: /*utm_*
+Disallow: /*filter=
+Disallow: /*sort=
+Disallow: /*page=
+
+# Разрешить CSS и JS для корректного рендеринга
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/fonts/
+
+# Разрешить изображения товаров для Google Images и Яндекс.Картинок
+Allow: /media/products/
+
+# =============================================================================
+# Для Яндекс (дополнительные настройки)
+# =============================================================================
+User-agent: Yandex
+
+# Разрешить индексацию публичных страниц
+Allow: /
+Allow: /item/
+Allow: /?category=
+
+# Запретить индексацию служебных разделов
+Disallow: /admin/
+Disallow: /bag/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /profile/
+Disallow: /order-success/
+Disallow: /cart-sync/
+Disallow: /favorites/
+Disallow: /api/
+Disallow: /telegram/
+Disallow: /analytics/
+Disallow: /static/
+Disallow: /media/
+
+# Запретить URL с параметрами
+Disallow: /*?*
+Disallow: /*&*
+Disallow: /*utm_*
+Disallow: /*filter=
+Disallow: /*sort=
+Disallow: /*page=
+
+# Разрешить ресурсы для рендеринга
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/fonts/
+Allow: /media/products/
+
+# Главный хост для Яндекса
+Host: https://tlpn.shop/
+
+# =============================================================================
+# Для Яндекс.Картинки
+# =============================================================================
+User-agent: YandexImages
+Allow: /media/products/
+Disallow: /admin/
+Disallow: /bag/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /profile/
+Disallow: /api/
+Disallow: /telegram/
+Disallow: /analytics/
+
+# =============================================================================
+# Для Googlebot
+# =============================================================================
+User-agent: Googlebot
+Allow: /
+Allow: /item/
+Allow: /?category=
+Disallow: /admin/
+Disallow: /bag/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /profile/
+Disallow: /order-success/
+Disallow: /cart-sync/
+Disallow: /favorites/
+Disallow: /api/
+Disallow: /telegram/
+Disallow: /analytics/
+Disallow: /static/
+Disallow: /media/
+Disallow: /*?*
+Disallow: /*&*
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/fonts/
+Allow: /media/products/
+
+# =============================================================================
+# Для мобильных роботов
+# =============================================================================
+User-agent: Googlebot-Mobile
+Allow: /
+Allow: /item/
+Disallow: /admin/
+Disallow: /bag/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /profile/
+Disallow: /api/
+Disallow: /*?*
+
+# =============================================================================
+# Sitemap
+# =============================================================================
+Sitemap: https://tlpn.shop/sitemap.xml
