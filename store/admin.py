@@ -127,21 +127,23 @@ class ProductAdmin(admin.ModelAdmin):
     def has_webp(self, obj):
         """Показывает статус WebP изображений"""
         if not obj.image:
-            return format_html('<span style="color: #999;">❌ Нет изображения</span>')
+            return format_html('<span style="color: #999;">Нет изображения</span>')
         
-        def check_webp(webp_field):
-            """Проверяет существование WebP файла"""
-            try:
-                if not webp_field:
-                    return False
-                return webp_field.storage.exists(webp_field.name)
-            except Exception:
-                return False
-        
-        webp_400 = '✅' if check_webp(obj.image_webp_400) else '❌'
-        webp_800 = '✅' if check_webp(obj.image_webp_800) else '❌'
-        
-        return format_html(f'{webp_400} 400px | {webp_800} 800px')
+        # Просто показываем URL если файл существует
+        try:
+            url_400 = obj.image_webp_400.url if obj.image_webp_400 else None
+            url_800 = obj.image_webp_800.url if obj.image_webp_800 else None
+            
+            if url_400 and url_800:
+                return format_html('<span style="color: green;">✅ 400px | ✅ 800px</span>')
+            elif url_400:
+                return format_html('<span style="color: orange;">✅ 400px | ❌ 800px</span>')
+            elif url_800:
+                return format_html('<span style="color: orange;">❌ 400px | ✅ 800px</span>')
+            else:
+                return format_html('<span style="color: red;">❌ Не сгенерировано</span>')
+        except Exception as e:
+            return format_html(f'<span style="color: red;">Ошибка: {str(e)[:50]}</span>')
     has_webp.short_description = 'WebP статус'
     
     def webp_status(self, obj):
@@ -149,28 +151,19 @@ class ProductAdmin(admin.ModelAdmin):
         if not obj.image:
             return 'Изображение не загружено'
         
-        def check_webp(webp_field):
-            """Проверяет существование WebP файла"""
-            try:
-                if not webp_field:
-                    return None, False
-                exists = webp_field.storage.exists(webp_field.name)
-                return webp_field.url if exists else None, exists
-            except Exception:
-                return None, False
-        
-        status = []
-        url_400, exists_400 = check_webp(obj.image_webp_400)
-        if exists_400:
-            status.append(f'✅ 400px: {url_400}')
-        else:
-            status.append('❌ 400px: не сгенерировано')
+        try:
+            status = []
+            if obj.image_webp_400:
+                status.append(f'✅ 400px: {obj.image_webp_400.url}')
+            else:
+                status.append('❌ 400px: не сгенерировано')
+                
+            if obj.image_webp_800:
+                status.append(f'✅ 800px: {obj.image_webp_800.url}')
+            else:
+                status.append('❌ 800px: не сгенерировано')
             
-        url_800, exists_800 = check_webp(obj.image_webp_800)
-        if exists_800:
-            status.append(f'✅ 800px: {url_800}')
-        else:
-            status.append('❌ 800px: не сгенерировано')
-        
-        return format_html('<br>'.join(status))
+            return format_html('<br>'.join(status))
+        except Exception as e:
+            return format_html(f'<span style="color: red;">Ошибка: {e}</span>')
     webp_status.short_description = 'Статус генерации WebP'
