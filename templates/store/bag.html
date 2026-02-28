@@ -939,13 +939,28 @@
             console.log('[TMA] Response status:', response.status);
 
             if (!response.ok) {
-                const error = await response.json();
-                console.error('[TMA] Error response:', error);
+                // Пробуем получить JSON, но если не получится — показываем статус
+                let error;
+                let errorMsg = `Ошибка сервера: ${response.status}`;
+                
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        error = await response.json();
+                        console.error('[TMA] Error response:', error);
+                    } else {
+                        // Сервер вернул HTML (например, 500 ошибку)
+                        const text = await response.text();
+                        console.error('[TMA] Server returned HTML instead of JSON:', text.substring(0, 500));
+                        errorMsg = `Сервер вернул ошибку ${response.status}. Проверьте логи Django.`;
+                    }
+                } catch (parseError) {
+                    console.error('[TMA] Failed to parse error response:', parseError);
+                    errorMsg = `Ошибка ${response.status}. Проверьте подключение к серверу.`;
+                }
                 
                 // Показываем конкретную ошибку от сервера через alert
-                let errorMsg = 'Не удалось создать заказ';
                 if (error && typeof error === 'object') {
-                    // Если ошибка содержит детали по полям
                     const errors = Object.entries(error).map(([field, messages]) => {
                         const fieldName = {
                             'items': 'Товары',
@@ -972,8 +987,6 @@
                             ? error.non_field_errors.join('\n') 
                             : error.non_field_errors;
                     }
-                } else if (typeof error === 'string') {
-                    errorMsg = error;
                 }
                 
                 alert(errorMsg);
