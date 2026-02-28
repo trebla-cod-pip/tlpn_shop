@@ -279,9 +279,15 @@
     }
 
     async function saveTelegramUserProfile(initData, tgUser) {
-        if (!tgUser?.id) return;
+        if (!tgUser?.id) {
+            console.warn('[TMA bag.html] Нет user.id для сохранения');
+            return;
+        }
+        
+        console.log('[TMA bag.html] Сохранение профиля на сервере:', tgUser);
+        
         try {
-            await fetch('/telegram/save-user/', {
+            const response = await fetch('/telegram/save-user/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -296,16 +302,28 @@
                     }
                 })
             });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            console.log('[TMA bag.html] Сервер ответил:', result);
+            
+            return result;
         } catch (e) {
-            console.warn('[TMA] Failed to save telegram user profile:', e);
+            console.error('[TMA bag.html] Ошибка сохранения профиля:', e);
+            throw e;
         }
     }
 
     // Инициализация Telegram WebApp
     function initTelegramUser() {
-        // Ждём загрузки Telegram WebApp
+        console.log('[TMA bag.html] Начало инициализации Telegram пользователя...');
+        
+        // Проверяем, загружен ли скрипт Telegram
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.log('[TMA] WebApp ещё не загружен, пробуем через 100мс');
+            console.log('[TMA bag.html] Telegram WebApp скрипт ещё не загружен, ждём...');
             setTimeout(initTelegramUser, 100);
             return;
         }
@@ -316,9 +334,17 @@
 
         // Разворачиваем на весь экран
         tg.expand();
+        
+        console.log('[TMA bag.html] Telegram WebApp:', {
+            platform: tg.platform,
+            version: tg.version,
+            colorScheme: tg.colorScheme,
+            hasInitData: !!tg.initData,
+            hasUser: !!tg.initDataUnsafe?.user,
+        });
 
         // Получаем данные пользователя
-        if (tg.initDataUnsafe?.user) {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const tgUser = tg.initDataUnsafe.user;
             user = {
                 id: tgUser.id,
@@ -326,21 +352,43 @@
                 first_name: tgUser.first_name || '',
                 last_name: tgUser.last_name || '',
                 phone: tgUser.phone || '',
+                language_code: tgUser.language_code || '',
+                is_premium: !!tgUser.is_premium,
             };
 
-            user = { ...user, ...readStoredUserProfile(user.id) };
-            saveUserProfileToStorage();
-            void hydrateUserFromLastOrders();
-            void saveTelegramUserProfile(tg.initData, tgUser);
+            console.log('[TMA bag.html] Данные пользователя из Telegram:', user);
 
-            console.log('[TMA] Пользователь:', user);
+            // Читаем сохранённый профиль из localStorage
+            const storedProfile = readStoredUserProfile(user.id);
+            if (storedProfile && Object.keys(storedProfile).length > 0) {
+                console.log('[TMA bag.html] Восстановление профиля из localStorage:', storedProfile);
+                user = { ...user, ...storedProfile };
+            }
+            
+            // Сохраняем обновлённый профиль
+            saveUserProfileToStorage();
+            
+            // Загружаем историю заказов для автозаполнения
+            hydrateUserFromLastOrders();
+            
+            // Сохраняем на сервере
+            saveTelegramUserProfile(tg.initData, tgUser)
+                .then(() => {
+                    console.log('[TMA bag.html] Профиль сохранён на сервере');
+                })
+                .catch(err => {
+                    console.error('[TMA bag.html] Ошибка сохранения на сервере:', err);
+                });
+
+            console.log('[TMA bag.html] Пользователь инициализирован:', user);
 
             // Haptic feedback при входе
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
             }
         } else {
-            console.log('[TMA] Нет данных пользователя (веб-версия или ошибка)');
+            console.warn('[TMA bag.html] Нет данных пользователя (веб-версия или ошибка)');
+            console.log('[TMA bag.html] initDataUnsafe:', window.Telegram.WebApp.initDataUnsafe);
         }
     }
 

@@ -259,12 +259,16 @@
 
         function initTelegramWebApp() {
             if (!window.Telegram || !window.Telegram.WebApp) {
+                console.log('[TMA] Telegram WebApp не доступен');
                 return;
             }
 
             tg = window.Telegram.WebApp;
             tg.ready();
             tg.expand();
+            
+            // Включаем подтверждение закрытия
+            tg.enableClosingConfirmation();
 
             if (tg.colorScheme === 'dark') {
                 document.documentElement.style.setProperty('--background', '#1c1c1d');
@@ -272,14 +276,28 @@
                 document.documentElement.style.setProperty('--card', '#2c2c2e');
             }
 
+            // Логируем данные для отладки
+            console.log('[TMA] Инициализация:', {
+                version: tg.version,
+                platform: tg.platform,
+                colorScheme: tg.colorScheme,
+                hasUser: !!tg.initDataUnsafe?.user,
+                userId: tg.initDataUnsafe?.user?.id,
+            });
+
             // Сохраняем данные пользователя
             saveTelegramUser();
         }
-        
+
         function saveTelegramUser() {
             const user = tg.initDataUnsafe?.user;
-            if (!user?.id) return;
-            
+            if (!user?.id) {
+                console.log('[TMA] Нет данных пользователя');
+                return;
+            }
+
+            console.log('[TMA] Сохранение пользователя:', user);
+
             fetch('/telegram/save-user/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -290,9 +308,9 @@
             })
             .then(r => r.json())
             .then(data => {
-                console.log('[Telegram] User saved:', data);
+                console.log('[TMA] User saved:', data);
             })
-            .catch(err => console.error('[Telegram] Save error:', err));
+            .catch(err => console.error('[TMA] Save error:', err));
         }
 
         function loadDeferredScript(src, { async = true, callback } = {}) {
@@ -306,33 +324,15 @@
         }
 
         function initExternalScripts() {
-            // Определяем, запущено ли приложение в Telegram WebApp
-            const isTMA = isTelegramWebApp() || (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
-
-            if (isTMA) {
-                // Если TMA - загружаем скрипт синхронно для немедленной доступности
-                const script = document.createElement('script');
-                script.src = 'https://telegram.org/js/telegram-web-app.js';
-                script.async = false; // Синхронная загрузка
-                script.onload = initTelegramWebApp;
-                document.head.appendChild(script);
-            } else {
-                // Если обычный браузер - откладываем загрузку до DOMContentLoaded
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', loadTelegramScriptDeferred);
-                } else {
-                    loadTelegramScriptDeferred();
-                }
-            }
-        }
-
-        function loadTelegramScriptDeferred() {
-            // Загружаем через 3 секунды после загрузки страницы
-            setTimeout(function() {
-                loadDeferredScript('https://telegram.org/js/telegram-web-app.js', {
-                    callback: initTelegramWebApp,
-                });
-            }, 3000);
+            // Загружаем Telegram WebApp скрипт сразу для всех
+            // TMA определится автоматически внутри скрипта
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-web-app.js';
+            script.async = true;
+            script.onload = initTelegramWebApp;
+            document.head.appendChild(script);
+            
+            console.log('[TMA] Загрузка Telegram WebApp скрипта...');
         }
 
         window.dataLayer = window.dataLayer || [];
