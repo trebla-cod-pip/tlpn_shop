@@ -87,21 +87,26 @@ class Command(BaseCommand):
             try:
                 generated = False
                 
-                # Если --regenerate - удаляем старые и генерируем заново
+                # Если --regenerate - ВСЕГДА удаляем старые и генерируем заново
                 if regenerate_all:
+                    self.stdout.write('(перегенерация) ', ending=' ')
+                    # Удаляем и генерируем заново
                     gen_400 = force_generate_webp(product.image_webp_400)
                     gen_800 = force_generate_webp(product.image_webp_800)
                     generated = gen_400 or gen_800
                 else:
                     # Просто генерируем если нет
                     try:
-                        if not product.image_webp_400.storage.exists(product.image_webp_400.name):
+                        exists_400 = product.image_webp_400.storage.exists(product.image_webp_400.name)
+                        exists_800 = product.image_webp_800.storage.exists(product.image_webp_800.name)
+                        
+                        if not exists_400:
                             product.image_webp_400.generate()
                             generated = True
-                        if not product.image_webp_800.storage.exists(product.image_webp_800.name):
+                        if not exists_800:
                             product.image_webp_800.generate()
                             generated = True
-                    except:
+                    except Exception:
                         # Если ошибка при проверке - генерируем принудительно
                         product.image_webp_400.generate()
                         product.image_webp_800.generate()
