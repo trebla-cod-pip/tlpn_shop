@@ -942,13 +942,25 @@
                 const error = await response.json();
                 console.error('[TMA] Error response:', error);
                 
-                // Показываем конкретную ошибку от сервера
+                // Показываем конкретную ошибку от сервера через alert
                 let errorMsg = 'Не удалось создать заказ';
                 if (error && typeof error === 'object') {
                     // Если ошибка содержит детали по полям
                     const errors = Object.entries(error).map(([field, messages]) => {
-                        return `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+                        const fieldName = {
+                            'items': 'Товары',
+                            'phone': 'Телефон',
+                            'delivery_address': 'Адрес доставки',
+                            'delivery_date': 'Дата доставки',
+                            'delivery_time': 'Время доставки',
+                            'telegram_user_id': 'Telegram ID',
+                            'non_field_errors': 'Ошибка'
+                        }[field] || field;
+                        
+                        const message = Array.isArray(messages) ? messages.join(', ') : messages;
+                        return `${fieldName}: ${message}`;
                     });
+                    
                     if (errors.length > 0) {
                         errorMsg = errors.join('\n');
                     } else if (error.error) {
@@ -956,7 +968,9 @@
                     } else if (error.detail) {
                         errorMsg = error.detail;
                     } else if (error.non_field_errors) {
-                        errorMsg = error.non_field_errors.join('\n');
+                        errorMsg = Array.isArray(error.non_field_errors) 
+                            ? error.non_field_errors.join('\n') 
+                            : error.non_field_errors;
                     }
                 } else if (typeof error === 'string') {
                     errorMsg = error;
