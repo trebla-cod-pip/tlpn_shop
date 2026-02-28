@@ -147,45 +147,45 @@ def send_order_notification(order) -> bool:
 
     # Сообщение пользователю
     user_message = f"""
-🌷 <b>Заказ #{order.id} принят!</b>
+Заказ #{order.id} принят!
 
 Спасибо за заказ в Tulipa!
 
-📦 <b>Ваш заказ:</b>
+Ваш заказ:
 {items_text}
-💰 <b>Итого:</b> {order.total_amount}₽
+Итого: {order.total_amount}₽
 
-🚚 <b>Доставка:</b>
-📍 {order.delivery_address}
-📅 {order.delivery_date.strftime('%d.%m.%Y')}
-⏰ {order.delivery_time or 'В течение дня'}
+Доставка:
+{order.delivery_address}
+{order.delivery_date.strftime('%d.%m.%Y')}
+{order.delivery_time or 'В течение дня'}
 
-📞 <b>Контакты:</b>
+Контакты:
 {order.phone}
-{contact_icon} <b>Предпочтительный способ связи:</b> {contact_text}
+Предпочтительный способ связи: {contact_text}
 
 Мы свяжемся с вами для подтверждения доставки.
     """.strip()
 
     # Сообщение админу
     admin_message = f"""
-🔔 <b>Новый заказ #{order.id}!</b>
+Новый заказ #{order.id}!
 
-👤 <b>Клиент:</b>
+Клиент:
 • {client_name}
 • Телефон: {order.phone}
-• <b>Предпочтительный способ связи:</b> {contact_text}
+• Предпочтительный способ связи: {contact_text}
 
-📦 <b>Заказ:</b>
+Заказ:
 {items_text}
-💰 <b>Итого:</b> {order.total_amount}₽
+Итого: {order.total_amount}₽
 
-🚚 <b>Доставка:</b>
-📍 {order.delivery_address}
-📅 {order.delivery_date.strftime('%d.%m.%Y')}
-⏰ {order.delivery_time or 'В течение дня'}
+Доставка:
+{order.delivery_address}
+{order.delivery_date.strftime('%d.%m.%Y')}
+{order.delivery_time or 'В течение дня'}
 
-💬 <b>Комментарий:</b>
+Комментарий:
 {order.comment or 'Нет'}
 
 <a href='http://localhost:8000/admin/orders/order/{order.id}/change/'>Открыть в админке</a>
@@ -226,6 +226,7 @@ def send_order_notification(order) -> bool:
     if admin_chat_id:
         try:
             admin_sent = send_telegram_message(int(admin_chat_id), admin_message)
+            logger.info(f"Результат отправки админу: {admin_sent}")
         except Exception as e:
             logger.error(f"Ошибка отправки админу: {e}")
     else:

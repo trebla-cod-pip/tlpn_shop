@@ -24,7 +24,10 @@ def home(request):
 
 def item(request, slug):
     """Страница товара"""
-    return render(request, 'store/item.html', {'slug': slug})
+    # Оптимизация: select_related для category чтобы избежать N+1
+    from store.models import Product
+    product = Product.objects.select_related('category').get(slug=slug)
+    return render(request, 'store/item.html', {'product': product})
 
 
 def bag(request):
