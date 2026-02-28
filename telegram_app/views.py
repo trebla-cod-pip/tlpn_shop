@@ -132,22 +132,14 @@ def telegram_save_user(request):
         if not created:
             tg_user.update_from_telegram(user_data)
 
-        # Сохраняем chat_id из initData если есть
-        if init_data:
-            from urllib.parse import parse_qs
-            parsed_data = {k: v[0] if len(v) == 1 else v for k, v in parse_qs(init_data).items()}
-            chat_instance = parsed_data.get('chat_instance')
-            
-            logger.info(f"chat_instance из initData: {chat_instance}")
-            logger.info(f"Полный initData: {parsed_data}")
-            logger.info(f"telegram_id пользователя: {user_data.get('id')}")
-
-            if not tg_user.chat_id:
-                # Используем telegram_id как chat_id для отправки сообщений
-                # Это работает для личных сообщений с пользователем
-                tg_user.chat_id = user_data['id']
-                tg_user.save()
-                logger.info(f"Сохранен chat_id {tg_user.chat_id} для пользователя {tg_user.telegram_id}")
+        # Сохраняем chat_id для отправки уведомлений
+        # Используем telegram_id как chat_id (для личных сообщений)
+        if not tg_user.chat_id or str(tg_user.chat_id).startswith('-') or len(str(tg_user.chat_id)) > 15:
+            # Если chat_id не установлен или это chat_instance (слишком большой/отрицательный)
+            # используем telegram_id
+            tg_user.chat_id = str(user_data['id'])
+            tg_user.save()
+            logger.info(f"Установлен chat_id={tg_user.chat_id} для пользователя {tg_user.telegram_id}")
 
         return JsonResponse({
             'success': True,
