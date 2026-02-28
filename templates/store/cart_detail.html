@@ -10,6 +10,24 @@
         <p style="color: var(--muted-foreground);">Проверьте товары перед оформлением.</p>
         <!-- Реальная верстка корзины реализуется на стороне клиента -->
     </section>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
+                <span>Главная</span>
+            </a>
+            <a href="/delivery/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-delivery"></use></svg>
+                <span>Доставка</span>
+            </a>
+            <a href="/bag/" class="nav-item nav-item--active">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>
+                <span>Корзина</span>
+            </a>
+        </div>
+    </nav>
 </div>
 {% endblock %}
 

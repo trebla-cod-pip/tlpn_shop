@@ -1,14 +1,34 @@
 {% extends 'base.html' %}
 {% block title %}Профиль - Tulipa{% endblock %}
 {% block content %}
-<div class="app-inner" style="display: flex; align-items: center; justify-content: center; padding: 48px 24px; text-align: center;">
-    <div>
-        <svg class="icon" style="width: 64px; height: 64px; color: var(--muted-foreground); margin-bottom: 16px;"><use href="#icon-user"></use></svg>
-        <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Профиль</h2>
-        <p style="color: var(--muted-foreground);">Скоро будет доступно</p>
-        <button onclick="navigateTo('/')" style="margin-top: 24px; background: var(--foreground); color: var(--background); padding: 14px 32px; border-radius: var(--radius-xl); border: none; font-size: 14px; font-weight: 500; cursor: pointer;">
-            В каталог
-        </button>
+<div class="app-inner">
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; text-align: center;">
+        <div>
+            <svg class="icon" style="width: 64px; height: 64px; color: var(--muted-foreground); margin-bottom: 16px;"><use href="#icon-user"></use></svg>
+            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Профиль</h2>
+            <p style="color: var(--muted-foreground);">Скоро будет доступно</p>
+            <button onclick="navigateTo('/')" style="margin-top: 24px; background: var(--foreground); color: var(--background); padding: 14px 32px; border-radius: var(--radius-xl); border: none; font-size: 14px; font-weight: 500; cursor: pointer;">
+                В каталог
+            </button>
+        </div>
     </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-home"></use></svg>
+                <span>Главная</span>
+            </a>
+            <a href="/delivery/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-delivery"></use></svg>
+                <span>Доставка</span>
+            </a>
+            <a href="/bag/" class="nav-item">
+                <svg class="icon" style="width: 22px; height: 22px;"><use href="#icon-shopping-bag"></use></svg>
+                <span>Корзина</span>
+            </a>
+        </div>
+    </nav>
 </div>
 {% endblock %}
