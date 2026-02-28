@@ -124,10 +124,10 @@ def send_order_notification(order) -> bool:
     # Формируем список товаров
     items_text = ""
     for item in order.items.all():
-        items_text += f"  • {item.product.name} x {item.quantity} — {item.total}₽\n"
+        items_text += f"• {item.product.name} × {item.quantity} — {item.total}₽\n"
 
     # Иконка способа связи
-    contact_icon = "[TEL]" if order.preferred_contact_method == 'phone' else "[TG]"
+    contact_icon = "📱" if order.preferred_contact_method == 'phone' else "✈️"
 
     # Формируем текст способа связи
     if order.preferred_contact_method == 'phone':
@@ -145,54 +145,48 @@ def send_order_notification(order) -> bool:
     if not client_name:
         client_name = f"Telegram @{order.telegram_username}" if order.telegram_username else f"Пользователь #{order.telegram_user_id}"
 
-    # Сообщение пользователю (без смайликов, строгий стиль)
+    # Сообщение пользователю (чистый текст без рамок)
     user_message = f"""
-╔═══════════════════════════════════════╗
-       ЗАКАЗ #{order.id} ПРИНЯТ
-╚═══════════════════════════════════════╝
+<b>Заказ #{order.id} принят</b>
 
 Благодарим за заказ в Tulipa!
 
-ВАШ ЗАКАЗ:
-───────────────────────────────────────
-{items_text}───────────────────────────────────────
-ИТОГО: {order.total_amount}₽
+<b>Ваш заказ:</b>
+{items_text}
+<b>Итого:</b> {order.total_amount}₽
 
-ДОСТАВКА:
-  Адрес: {order.delivery_address}
-  Дата: {order.delivery_date.strftime('%d.%m.%Y')}
-  Время: {order.delivery_time or 'В течение дня'}
+<b>Доставка:</b>
+📍 {order.delivery_address}
+📅 {order.delivery_date.strftime('%d.%m.%Y')}
+⏰ {order.delivery_time or 'В течение дня'}
 
-КОНТАКТЫ:
-  Телефон: {order.phone}
-  Связь: {contact_icon} {contact_text}
+<b>Контакты:</b>
+{order.phone}
+{contact_icon} <b>Предпочтительный способ связи:</b> {contact_text}
 
 Мы свяжемся с вами для подтверждения доставки.
     """.strip()
 
-    # Сообщение админу (строгий стиль)
+    # Сообщение админу (чистый текст без рамок)
     admin_message = f"""
-╔═══════════════════════════════════════╗
-         НОВЫЙ ЗАКАЗ #{order.id}
-╚═══════════════════════════════════════╝
+<b>Новый заказ #{order.id}</b>
 
-КЛИЕНТ:
-  Имя: {client_name}
-  Телефон: {order.phone}
-  Связь: {contact_icon} {contact_text}
+<b>Клиент:</b>
+• {client_name}
+• Телефон: {order.phone}
+• <b>Предпочтительный способ связи:</b> {contact_text}
 
-ЗАКАЗ:
-───────────────────────────────────────
-{items_text}───────────────────────────────────────
-ИТОГО: {order.total_amount}₽
+<b>Заказ:</b>
+{items_text}
+<b>Итого:</b> {order.total_amount}₽
 
-ДОСТАВКА:
-  Адрес: {order.delivery_address}
-  Дата: {order.delivery_date.strftime('%d.%m.%Y')}
-  Время: {order.delivery_time or 'В течение дня'}
+<b>Доставка:</b>
+📍 {order.delivery_address}
+📅 {order.delivery_date.strftime('%d.%m.%Y')}
+⏰ {order.delivery_time or 'В течение дня'}
 
-КОММЕНТАРИЙ:
-  {order.comment or 'Нет'}
+<b>Комментарий:</b>
+{order.comment or 'Нет'}
 
 Админка: http://localhost:8000/admin/orders/order/{order.id}/change/
     """.strip()
