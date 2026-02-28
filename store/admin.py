@@ -1,6 +1,11 @@
 from django.contrib import admin
+from django.contrib import messages
+from django.utils.html import format_html
 from store.models import Category, Product
 from django.utils.text import slugify
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def translit_slug(text):
@@ -25,6 +30,46 @@ def translit_slug(text):
     return result.strip('-')
 
 
+@admin.action(description='🔄 Сгенерировать WebP изображения для выбранных товаров')
+def generate_webp_images(modeladmin, request, queryset):
+    """
+    Генерирует WebP изображения для выбранных товаров
+    """
+    from imagekit.cachefiles import ImageCacheFile
+    
+    success_count = 0
+    error_count = 0
+    skipped_count = 0
+    
+    for product in queryset:
+        if not product.image:
+            skipped_count += 1
+            continue
+        
+        try:
+            # Генерируем image_webp_400
+            if product.image_webp_400:
+                product.image_webp_400.generate()
+            
+            # Генерируем image_webp_800
+            if product.image_webp_800:
+                product.image_webp_800.generate()
+            
+            success_count += 1
+            logger.info(f"WebP сгенерировано для товара: {product.name}")
+        except Exception as e:
+            error_count += 1
+            logger.error(f"Ошибка генерации WebP для {product.name}: {e}")
+    
+    # Выводим сообщение
+    if success_count > 0:
+        modeladmin.message_user(request, f"✅ Успешно сгенерировано: {success_count}", messages.SUCCESS)
+    if error_count > 0:
+        modeladmin.message_user(request, f"❌ Ошибок: {error_count}", messages.ERROR)
+    if skipped_count > 0:
+        modeladmin.message_user(request, f"⚠️ Пропущено (нет изображения): {skipped_count}", messages.WARNING)
+
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'is_active', 'created_at')
@@ -32,7 +77,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     prepopulated_fields = {}  # Отключаем стандартное prepopulated
     ordering = ('name',)
-    
+
     def save_model(self, request, obj, form, change):
         if not obj.slug:
             obj.slug = translit_slug(obj.name)
@@ -41,13 +86,14 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'created_at')
+    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'created_at', 'has_webp')
     list_filter = ('is_active', 'is_featured', 'category', 'created_at')
     search_fields = ('name', 'description', 'tags')
     prepopulated_fields = {}  # Отключаем стандартное prepopulated
     ordering = ('-created_at',)
     readonly_fields = ('discount', 'created_at', 'updated_at')
-    
+    actions = [generate_webp_images]
+
     fieldsets = (
         ('Основная информация', {
             'fields': ('name', 'slug', 'description', 'category')
@@ -56,7 +102,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('price', 'old_price', 'stock', 'discount')
         }),
         ('Изображения', {
-            'fields': ('image', 'cart_image')
+            'fields': ('image', 'cart_image', 'webp_status')
         }),
         ('Настройки отображения', {
             'fields': ('is_active', 'is_featured', 'tags')
@@ -66,7 +112,7 @@ class ProductAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     def save_model(self, request, obj, form, change):
         if not obj.slug:
             base_slug = translit_slug(obj.name)
@@ -77,3 +123,33 @@ class ProductAdmin(admin.ModelAdmin):
                 counter += 1
             obj.slug = slug
         super().save_model(request, obj, form, change)
+    
+    def has_webp(self, obj):
+        """Показывает статус WebP изображений"""
+        if not obj.image:
+            return format_html('<span style="color: #999;">❌ Нет изображения</span>')
+        
+        webp_400 = '✅' if obj.image_webp_400 and obj.image_webp_400.exists() else '❌'
+        webp_800 = '✅' if obj.image_webp_800 and obj.image_webp_800.exists() else '❌'
+        
+        return format_html(f'{webp_400} 400px | {webp_800} 800px')
+    has_webp.short_description = 'WebP статус'
+    
+    def webp_status(self, obj):
+        """Развёрнутая информация о WebP для отображения в форме"""
+        if not obj.image:
+            return 'Изображение не загружено'
+        
+        status = []
+        if obj.image_webp_400 and obj.image_webp_400.exists():
+            status.append(f'✅ 400px: {obj.image_webp_400.url}')
+        else:
+            status.append('❌ 400px: не сгенерировано')
+            
+        if obj.image_webp_800 and obj.image_webp_800.exists():
+            status.append(f'✅ 800px: {obj.image_webp_800.url}')
+        else:
+            status.append('❌ 800px: не сгенерировано')
+        
+        return format_html('<br>'.join(status))
+    webp_status.short_description = 'Статус генерации WebP'

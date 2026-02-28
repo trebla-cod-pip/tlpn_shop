@@ -68,10 +68,18 @@ class ProductListSerializer(serializers.ModelSerializer):
         return []
 
     def get_image_webp_400(self, obj):
-        return _webp_url(obj, 'image_webp_400')
+        try:
+            return _webp_url(obj, 'image_webp_400')
+        except Exception:
+            # Fallback на обычное изображение если WebP не сгенерировалось
+            return obj.image.url if obj.image else None
 
     def get_image_webp_800(self, obj):
-        return _webp_url(obj, 'image_webp_800')
+        try:
+            return _webp_url(obj, 'image_webp_800')
+        except Exception:
+            # Fallback на обычное изображение если WebP не сгенерировалось
+            return obj.image.url if obj.image else None
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):

@@ -5,8 +5,9 @@
 
 {% block extra_head %}
 <!-- Preload LCP image - главное изображение товара -->
-<link rel="preload" as="image" href="{{ product.image_webp_800.url }}" type="image/webp" fetchpriority="high">
-<link rel="preload" as="image" href="{{ product.image_webp_400.url }}" type="image/webp" media="(max-width: 800px)">
+{% if product.image %}
+<link rel="preload" as="image" href="{{ product.image.url }}" type="image/webp" fetchpriority="high">
+{% endif %}
 
 <!-- Preconnect к CDN изображений -->
 <link rel="preconnect" href="https://storage.googleapis.com" crossorigin>
@@ -15,7 +16,7 @@
 <meta name="description" content="{{ product.description|truncatewords:20 }}">
 <meta property="og:title" content="{{ product.name }} - Tulipa">
 <meta property="og:description" content="{{ product.description|truncatewords:20 }}">
-<meta property="og:image" content="{{ product.image_webp_800.url }}">
+<meta property="og:image" content="{{ product.image.url }}">
 <meta property="og:image:width" content="800">
 <meta property="og:image:height" content="1000">
 <meta property="og:type" content="product">
@@ -30,7 +31,7 @@
   "@type": "Product",
   "name": "{{ product.name }}",
   "description": "{{ product.description|escapejs }}",
-  "image": "{{ product.image_webp_800.url }}",
+  "image": "{{ product.image.url }}",
   "offers": {
     "@type": "Offer",
     "price": "{{ product.price }}",
@@ -77,18 +78,25 @@
     <div id="product-content" style="display: none; flex: 1; flex-direction: column;">
         <!-- Hero Image - LCP Element -->
         <div class="hero" style="padding: 16px 32px 40px; flex-shrink: 0;">
-            <picture>
-                <source type="image/webp" media="(min-width: 800px)" srcset="{{ product.image_webp_800.url }}">
-                <source type="image/webp" media="(max-width: 799px)" srcset="{{ product.image_webp_400.url }}">
-                <img id="product-image" class="img"
-                     src="{{ product.image.url }}"
-                     width="{{ product.image.width }}"
-                     height="{{ product.image.height }}"
-                     fetchpriority="high"
-                     loading="eager"
-                     decoding="async"
-                     alt="{{ product.name }}">
-            </picture>
+            {% if product.image %}
+            <img id="product-image" class="img"
+                 src="{{ product.image.url }}"
+                 width="{{ product.image.width }}"
+                 height="{{ product.image.height }}"
+                 fetchpriority="high"
+                 loading="eager"
+                 decoding="async"
+                 alt="{{ product.name }}">
+            {% else %}
+            <img id="product-image" class="img"
+                 src="https://via.placeholder.com/800x1000?text={{ product.name|urlencode }}"
+                 width="800"
+                 height="1000"
+                 fetchpriority="high"
+                 loading="eager"
+                 decoding="async"
+                 alt="{{ product.name }}">
+            {% endif %}
         </div>
 
         <!-- Product Info -->
@@ -132,7 +140,7 @@
         slug: '{{ product.slug }}',
         name: '{{ product.name|escapejs }}',
         price: {{ product.price }},
-        image: '{{ product.image.url }}',
+        image: '{{ product.image.url|default:"https://via.placeholder.com/800x1000" }}',
         cart_image: '{{ product.cart_image.url|default:product.image.url }}',
     };
 
