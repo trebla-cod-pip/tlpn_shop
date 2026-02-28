@@ -73,15 +73,19 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     def get_image_webp_400(self, obj):
         try:
-            return obj.image_webp_url
+            if obj.image_webp_url:
+                return obj.image_webp_url
         except Exception:
-            return obj.image.url if obj.image else None
+            pass
+        return obj.image.url if obj.image else None
 
     def get_image_webp_800(self, obj):
         try:
-            return obj.image_webp_url
+            if obj.image_webp_url:
+                return obj.image_webp_url
         except Exception:
-            return obj.image.url if obj.image else None
+            pass
+        return obj.image.url if obj.image else None
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import format_html
-from store.models import Category, Product
+from store.models import Category, Product, TelegramUser
 from django.utils.text import slugify
 import logging
 
@@ -128,61 +128,89 @@ class ProductAdmin(admin.ModelAdmin):
         """Показывает статус WebP изображений"""
         if not obj.image:
             return format_html('<span style="color: #999;">Нет изображения</span>')
-        
-        # Проверяем наличие URL без вызова исключения
+
+        url_400 = None
+        url_800 = None
+
+        # Проверяем image_webp_400
         try:
-            url_400 = None
-            url_800 = None
-            
             if obj.image_webp_400:
-                try:
-                    url_400 = obj.image_webp_400.url
-                except:
-                    pass
-            
+                url_400 = obj.image_webp_400.url
+        except Exception:
+            pass
+
+        # Проверяем image_webp_800
+        try:
             if obj.image_webp_800:
-                try:
-                    url_800 = obj.image_webp_800.url
-                except:
-                    pass
-            
-            if url_400 and url_800:
-                return format_html('<span style="color: green;">✅ 400px | ✅ 800px</span>')
-            elif url_400:
-                return format_html('<span style="color: orange;">✅ 400px | ❌ 800px</span>')
-            elif url_800:
-                return format_html('<span style="color: orange;">❌ 400px | ✅ 800px</span>')
-            else:
-                return format_html('<span style="color: red;">❌ Не сгенерировано</span>')
-        except Exception as e:
-            return format_html('<span style="color: red;">Ошибка</span>')
+                url_800 = obj.image_webp_800.url
+        except Exception:
+            pass
+
+        if url_400 and url_800:
+            return format_html('<span style="color: green;">✅ 400px | ✅ 800px</span>')
+        elif url_400:
+            return format_html('<span style="color: orange;">✅ 400px | ❌ 800px</span>')
+        elif url_800:
+            return format_html('<span style="color: orange;">❌ 400px | ✅ 800px</span>')
+        else:
+            return format_html('<span style="color: red;">❌ Не сгенерировано</span>')
     has_webp.short_description = 'WebP статус'
     
     def webp_status(self, obj):
         """Развёрнутая информация о WebP для отображения в форме"""
         if not obj.image:
             return 'Изображение не загружено'
-        
+
+        status = []
+
+        # Проверяем image_webp_400
         try:
-            status = []
-            
             if obj.image_webp_400:
-                try:
-                    status.append(f'✅ 400px: {obj.image_webp_400.url}')
-                except:
+                url = obj.image_webp_400.url
+                if url:
+                    status.append(f'✅ 400px: {url}')
+                else:
                     status.append('❌ 400px: не сгенерировано')
             else:
                 status.append('❌ 400px: не сгенерировано')
-                
+        except Exception:
+            status.append('❌ 400px: ошибка генерации')
+
+        # Проверяем image_webp_800
+        try:
             if obj.image_webp_800:
-                try:
-                    status.append(f'✅ 800px: {obj.image_webp_800.url}')
-                except:
+                url = obj.image_webp_800.url
+                if url:
+                    status.append(f'✅ 800px: {url}')
+                else:
                     status.append('❌ 800px: не сгенерировано')
             else:
                 status.append('❌ 800px: не сгенерировано')
-            
-            return format_html('<br>'.join(status))
-        except Exception as e:
-            return format_html('<span style="color: red;">Ошибка</span>')
+        except Exception:
+            status.append('❌ 800px: ошибка генерации')
+
+        return format_html('<br>'.join(status))
     webp_status.short_description = 'Статус генерации WebP'
+
+
+@admin.register(TelegramUser)
+class TelegramUserAdmin(admin.ModelAdmin):
+    list_display = ('telegram_id', 'username', 'first_name', 'last_name', 'language_code', 'is_premium', 'chat_id', 'last_seen')
+    list_filter = ('is_premium', 'language_code', 'created_at', 'last_seen')
+    search_fields = ('telegram_id', 'username', 'first_name', 'last_name')
+    readonly_fields = ('telegram_id', 'username', 'first_name', 'last_name', 'language_code', 'is_premium', 'created_at', 'last_seen')
+    ordering = ('-last_seen',)
+    date_hierarchy = 'last_seen'
+
+    fieldsets = (
+        ('Telegram данные', {
+            'fields': ('telegram_id', 'username', 'first_name', 'last_name', 'language_code', 'is_premium')
+        }),
+        ('Связь', {
+            'fields': ('user', 'chat_id')
+        }),
+        ('Даты', {
+            'fields': ('created_at', 'last_seen'),
+            'classes': ('collapse',)
+        }),
+    )

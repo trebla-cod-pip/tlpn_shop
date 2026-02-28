@@ -26,7 +26,7 @@ def item(request, slug):
     """Страница товара"""
     # Оптимизация: select_related для category чтобы избежать N+1
     from store.models import Product
-    product = Product.objects.select_related('category').get(slug=slug)
+    product = get_object_or_404(Product.objects.select_related('category'), slug=slug)
     return render(request, 'store/item.html', {'product': product})
 
 
