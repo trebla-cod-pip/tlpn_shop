@@ -941,7 +941,29 @@
             if (!response.ok) {
                 const error = await response.json();
                 console.error('[TMA] Error response:', error);
-                throw new Error(error.error || 'Не удалось создать заказ');
+                
+                // Показываем конкретную ошибку от сервера
+                let errorMsg = 'Не удалось создать заказ';
+                if (error && typeof error === 'object') {
+                    // Если ошибка содержит детали по полям
+                    const errors = Object.entries(error).map(([field, messages]) => {
+                        return `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+                    });
+                    if (errors.length > 0) {
+                        errorMsg = errors.join('\n');
+                    } else if (error.error) {
+                        errorMsg = error.error;
+                    } else if (error.detail) {
+                        errorMsg = error.detail;
+                    } else if (error.non_field_errors) {
+                        errorMsg = error.non_field_errors.join('\n');
+                    }
+                } else if (typeof error === 'string') {
+                    errorMsg = error;
+                }
+                
+                alert(errorMsg);
+                throw new Error(errorMsg);
             }
 
             const order = await response.json();
@@ -979,11 +1001,7 @@
 
         } catch (error) {
             console.error('[TMA] Error creating order:', error);
-            const errorMsg = error.message.includes('pattern') 
-                ? 'Ошибка проверки данных. Проверьте правильность заполнения всех полей.'
-                : `Ошибка: ${error.message}`;
-            alert(errorMsg);
-
+            // Ошибка уже показана в alert выше
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
