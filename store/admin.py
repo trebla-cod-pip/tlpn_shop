@@ -86,7 +86,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'created_at', 'has_webp')
+    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'created_at')
     list_filter = ('is_active', 'is_featured', 'category', 'created_at')
     search_fields = ('name', 'description', 'tags')
     prepopulated_fields = {}  # Отключаем стандартное prepopulated
