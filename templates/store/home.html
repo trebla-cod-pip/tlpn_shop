@@ -22,67 +22,102 @@
             <div class="brand-name">Tulipa</div>
         </div>
         <div class="hdr-right">
-            <div class="icon-btn" onclick="navigateTo('/bag/')">
+            <!-- Desktop Navigation -->
+            <nav class="desktop-nav" style="display: none;">
+                <a href="/profile/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-user"></use></svg>
+                    <span>Профиль</span>
+                </a>
+                <a href="/favorites/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-heart"></use></svg>
+                    <span>Избранное</span>
+                </a>
+                <a href="/bag/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-shopping-bag"></use></svg>
+                    <span>Корзина</span>
+                </a>
+            </nav>
+            <!-- Mobile bag icon -->
+            <div class="icon-btn" onclick="navigateTo('/bag/')" style="display: flex;">
                 <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-shopping-bag"></use></svg>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero" style="padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
-        <div class="hero-text" style="display: flex; flex-direction: column; gap: 8px;">
-            <div class="hero-kicker" style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #1a1a1a; font-weight: 500;">
-                Премиум бутик тюльпанов
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-text">
+                <div class="hero-kicker">Премиум бутик тюльпанов</div>
+                <h1 class="hero-title">
+                    Минималистичные букеты для светлого дома.
+                </h1>
+                <p class="hero-subtitle">
+                    Свежие тюльпаны в скандинавском стиле с доставкой в день заказа.
+                </p>
             </div>
-            <h1 class="hero-title" style="font-size: 28px; font-weight: 400; line-height: 1.2; letter-spacing: -0.5px;">
-                Минималистичные букеты для светлого дома.
-            </h1>
-            <p class="hero-subtitle" style="font-size: 15px; line-height: 1.6; color: #333333;">
-                Свежие тюльпаны в скандинавском стиле с доставкой в день заказа.
-            </p>
-        </div>
-        <div class="hero-media" style="width: 100%; aspect-ratio: 4 / 3; min-height: 220px; border-radius: var(--radius-lg); overflow: hidden; background: var(--muted);">
-            <img class="hero-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                 src="/media/products/homepage.webp" 
-                 loading="eager"
-                 width="1200" height="900" fetchpriority="high" decoding="async"
-                 alt="Избранный букет белых тюльпанов">
-        </div>
-    </section>
+            <div class="hero-media">
+                <img class="hero-img"
+                     src="/media/products/homepage.webp"
+                     loading="eager"
+                     width="1200" height="1500" fetchpriority="high" decoding="async"
+                     alt="Избранный букет белых тюльпанов">
+            </div>
+        </section>
 
-    <!-- Category Chips -->
-    <div class="chip-row" id="category-chips" style="padding: 0 24px 8px; display: flex; gap: 8px; overflow-x: auto; flex-wrap: wrap;">
-        <div class="chip chip--active" style="padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border); font-size: 13px; font-weight: 500; color: #222222; white-space: nowrap; cursor: pointer; background: var(--foreground); color: var(--background); border-color: var(--foreground);" data-category="" onclick="filterByCategory('', this)">
-            Все
+        <!-- Toolbar with filters and search -->
+        <div class="toolbar">
+            <div class="chip-row" id="category-chips">
+                <div class="chip chip--active" data-category="" onclick="filterByCategory('', this)">
+                    Все тюльпаны
+                </div>
+                <div class="chip" data-category="belye" onclick="filterByCategory('belye', this)">
+                    Белые
+                </div>
+                <div class="chip" data-category="pastel" onclick="filterByCategory('pastel', this)">
+                    Пастель
+                </div>
+                <div class="chip" data-category="sezonnye" onclick="filterByCategory('sezonnye', this)">
+                    Сезонные
+                </div>
+            </div>
+            <div class="search-row">
+                <div class="search-input">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-search"></use></svg>
+                    <span>Поиск букетов</span>
+                </div>
+                <div class="icon-btn">
+                    <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-sliders"></use></svg>
+                </div>
+            </div>
         </div>
-        <!-- Категории будут загружены через JS -->
+
+        <!-- Products Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Избранные букеты</h2>
+                <span class="section-link">Все букеты</span>
+            </div>
+
+            <!-- Loading state -->
+            <div id="products-loading" class="loading" style="min-height: 240px;">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Error state -->
+            <div id="products-error" class="error-message" style="display: none;">
+                Не удалось загрузить товары. Попробуйте снова.
+            </div>
+
+            <!-- Products grid -->
+            <div class="product-grid" id="products-grid" style="min-height: 240px;">
+                <!-- Товары будут загружены через JS -->
+            </div>
+        </section>
     </div>
-
-    <!-- Products Section -->
-    <section class="section" style="padding: 16px 24px 8px; display: flex; flex-direction: column; gap: 12px;">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 class="section-title" style="font-size: 17px; font-weight: 500;">Избранные букеты</h2>
-            <span class="section-link" style="font-size: 13px; color: var(--muted-foreground); cursor: pointer;">Все</span>
-        </div>
-        
-        <!-- Loading state -->
-        <div id="products-loading" class="loading" style="min-height: 240px;">
-            <div class="spinner"></div>
-        </div>
-        
-        <!-- Error state -->
-        <div id="products-error" class="error-message" style="display: none;">
-            Не удалось загрузить товары. Попробуйте снова.
-        </div>
-        
-        <!-- Products grid -->
-        <div class="product-grid" id="products-grid" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-height: 240px;">
-            <!-- Товары будут загружены через JS -->
-        </div>
-    </section>
 </div>
 
-<!-- Bottom Navigation -->
+<!-- Bottom Navigation (скрыта на десктопе) -->
 <nav class="bottom-nav">
     <div class="bottom-nav-inner">
         <a href="/" class="nav-item nav-item--active">
@@ -102,12 +137,26 @@
     let currentCategory = '';
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
+    // Показываем desktop навигацию на больших экранах
+    function updateNavVisibility() {
+        const desktopNav = document.querySelector('.desktop-nav');
+        const mobileBagIcon = document.querySelector('.hdr-right .icon-btn[onclick*="bag"]');
+        
+        if (window.innerWidth >= 1024) {
+            if (desktopNav) desktopNav.style.display = 'flex';
+            if (mobileBagIcon) mobileBagIcon.style.display = 'none';
+        } else {
+            if (desktopNav) desktopNav.style.display = 'none';
+            if (mobileBagIcon) mobileBagIcon.style.display = 'flex';
+        }
+    }
+
     // Загрузка категорий
     async function loadCategories() {
         try {
             const response = await apiRequest('/api/categories/');
             const chipsContainer = document.getElementById('category-chips');
-            
+
             // Русские названия для категорий
             const categoryNames = {
                 'belye': 'Белые',
@@ -116,10 +165,14 @@
                 'premium': 'Премиум'
             };
 
+            // Очищаем контейнер (оставляем только "Все тюльпаны")
+            const firstChip = chipsContainer.querySelector('.chip:first-child');
+            chipsContainer.innerHTML = '';
+            chipsContainer.appendChild(firstChip);
+
             response.forEach(category => {
                 const chip = document.createElement('div');
                 chip.className = 'chip';
-                chip.style.cssText = 'padding: 6px 12px; border-radius: var(--radius-xl); border: 1px solid var(--border); font-size: 13px; font-weight: 500; color: #222222; white-space: nowrap; cursor: pointer;';
                 chip.textContent = categoryNames[category.slug] || category.name;
                 chip.dataset.category = category.slug;
                 chip.onclick = () => filterByCategory(category.slug, chip);
@@ -133,19 +186,13 @@
     // Фильтрация по категории
     function filterByCategory(slug, chipElement) {
         currentCategory = slug;
-        
+
         // Обновляем активный чип
         document.querySelectorAll('.chip').forEach(c => {
             c.classList.remove('chip--active');
-            c.style.background = '';
-            c.style.color = '';
-            c.style.borderColor = '';
         });
         chipElement.classList.add('chip--active');
-        chipElement.style.background = 'var(--foreground)';
-        chipElement.style.color = 'var(--background)';
-        chipElement.style.borderColor = 'var(--foreground)';
-        
+
         loadProducts();
     }
 
@@ -154,26 +201,26 @@
         const loading = document.getElementById('products-loading');
         const error = document.getElementById('products-error');
         const grid = document.getElementById('products-grid');
-        
+
         loading.style.display = 'flex';
         error.style.display = 'none';
         grid.style.opacity = '0.45';
         grid.style.pointerEvents = 'none';
         grid.innerHTML = '';
-        
+
         try {
             let url = '/api/products/?featured=true';
             if (currentCategory) {
                 url = `/api/products/?category=${currentCategory}`;
             }
-            
+
             const products = await apiRequest(url);
-            
+
             products.forEach(product => {
                 const card = createProductCard(product);
                 grid.appendChild(card);
             });
-            
+
             loading.style.display = 'none';
             grid.style.opacity = '1';
             grid.style.pointerEvents = 'auto';
@@ -190,44 +237,46 @@
     function createProductCard(product) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.style.cssText = 'background: var(--card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 8px; cursor: pointer;';
         card.onclick = () => navigateTo(`/item/${product.slug}/`);
-        
-        const tagHtml = product.tags_list?.length ? 
-            `<span class="product-tag" style="font-size: 11px; padding: 2px 8px; border-radius: var(--radius-xl); background: var(--secondary); color: var(--secondary-foreground);">${product.tags_list[0]}</span>` : '';
-        
+
+        const tagHtml = product.tags_list?.length ?
+            `<span class="product-tag">${product.tags_list[0]}</span>` : '';
+
         const baseImage = product.image || 'https://via.placeholder.com/300x400';
         const webpMobile = product.image_webp_400 || baseImage;
         const webpDesktop = product.image_webp_800 || baseImage;
+        
         card.innerHTML = `
-            <div class="product-media" style="width: 100%; aspect-ratio: 3/4; border-radius: var(--radius-md); overflow: hidden; background: var(--muted);">
+            <div class="product-media">
                 <picture>
                     <source type="image/webp" media="(min-width: 800px)" srcset="${webpDesktop}">
                     <source type="image/webp" media="(max-width: 799px)" srcset="${webpMobile}">
-                    <img class="product-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                         src="${baseImage}" 
+                    <img class="product-img"
+                         src="${baseImage}"
                          loading="lazy" decoding="async" width="600" height="800"
                          alt="${product.name}">
                 </picture>
             </div>
-            <div class="product-name" style="font-size: 14px; font-weight: 500; line-height: 1.3;">${product.name}</div>
-            <div class="product-meta" style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="product-price" style="font-size: 14px; font-weight: 500;">${product.price} ₽</span>
+            <div class="product-name">${product.name}</div>
+            <div class="product-meta">
+                <span class="product-price">${product.price} ₽</span>
                 ${tagHtml}
             </div>
         `;
-        
+
         return card;
     }
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
+        updateNavVisibility();
         loadCategories();
         loadProducts();
-        
-        // Обновляем иконку корзины
         updateCartIcon();
     });
+
+    // Обновляем навигацию при ресайзе
+    window.addEventListener('resize', updateNavVisibility);
 
     function updateCartIcon() {
         const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);

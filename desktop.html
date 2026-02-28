@@ -1,0 +1,490 @@
+<div
+  class="export-wrapper"
+  style="
+    width: 1440px;
+    min-height: 812px;
+    position: relative;
+    font-family: var(--font-family-body);
+    background-color: var(--background);
+  "
+>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=Geist:wght@100;200;300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Nunito:wght@200;300;400;500;600;700;800;900&family=PT+Serif:wght@400;700&family=Roboto+Slab:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&family=Shantell+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <html>
+    <head>
+      <style id="reset-styles">
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        .export-wrapper {
+          font-family: var(--font-family-body);
+        }
+      </style>
+      <style id="layout-styles">
+        .app {
+          min-height: 100vh;
+          background: var(--background);
+          color: var(--foreground);
+          display: flex;
+          flex-direction: column;
+        }
+        .container {
+          max-width: 1440px;
+          margin: 0 auto;
+          width: 100%;
+          padding: 0 80px;
+        }
+      </style>
+      <style id="header-styles">
+        .hdr {
+          padding: 32px 80px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: var(--background);
+        }
+        .hdr-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .brand-mark {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          font-weight: 500;
+        }
+        .brand-name {
+          font-size: 18px;
+          font-weight: 500;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+        }
+        .hdr-right {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .icon-btn {
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          border: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--background);
+        }
+      </style>
+      <style id="hero-styles">
+        .hero {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 120px;
+          align-items: center;
+          padding: 80px 0 120px;
+        }
+        .hero-text {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+        .hero-kicker {
+          font-size: 14px;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          color: var(--muted-foreground);
+          font-weight: 500;
+        }
+        .hero-title {
+          font-size: 56px;
+          font-weight: 400;
+          line-height: 1.15;
+          letter-spacing: -1px;
+        }
+        .hero-subtitle {
+          font-size: 18px;
+          line-height: 1.6;
+          color: var(--muted-foreground);
+          max-width: 480px;
+        }
+        .hero-media {
+          width: 100%;
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: var(--muted);
+          aspect-ratio: 4/5;
+        }
+        .hero-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+      </style>
+      <style id="toolbar-styles">
+        .toolbar {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 0 48px;
+        }
+        .chip-row {
+          display: flex;
+          gap: 12px;
+        }
+        .chip {
+          padding: 10px 24px;
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--border);
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--muted-foreground);
+        }
+        .chip--active {
+          background: var(--foreground);
+          color: var(--background);
+          border-color: var(--foreground);
+        }
+        .search-row {
+          display: flex;
+          gap: 16px;
+          align-items: center;
+        }
+        .search-input {
+          width: 320px;
+          background: var(--input);
+          border-radius: var(--radius-xl);
+          padding: 14px 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--muted-foreground);
+          font-size: 14px;
+        }
+      </style>
+      <style id="products-styles">
+        .section {
+          padding-bottom: 120px;
+        }
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 40px;
+        }
+        .section-title {
+          font-size: 28px;
+          font-weight: 500;
+        }
+        .section-link {
+          font-size: 15px;
+          color: var(--muted-foreground);
+          font-weight: 500;
+        }
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 32px;
+        }
+        .product-card {
+          background: var(--card);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--border);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .product-media {
+          width: 100%;
+          aspect-ratio: 3/4;
+          border-radius: var(--radius-md);
+          overflow: hidden;
+          background: var(--muted);
+        }
+        .product-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .product-name {
+          font-size: 18px;
+          font-weight: 500;
+          line-height: 1.3;
+        }
+        .product-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .product-price {
+          font-size: 16px;
+          font-weight: 500;
+        }
+        .product-tag {
+          font-size: 12px;
+          padding: 4px 12px;
+          border-radius: var(--radius-xl);
+          background: var(--secondary);
+          color: var(--secondary-foreground);
+          font-weight: 500;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="app">
+        <header class="hdr">
+          <div class="hdr-left">
+            <div class="brand-mark">T</div>
+            <div class="brand-name">Tulipa</div>
+          </div>
+          <div class="hdr-right">
+            <div class="icon-btn" data-media-type="banani-button">
+              <div
+                style="
+                  width: 20px;
+                  height: 20px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <iconify-icon
+                  icon="lucide:user"
+                  style="font-size: 20px; color: var(--foreground)"
+                ></iconify-icon>
+              </div>
+            </div>
+            <div class="icon-btn" data-media-type="banani-button">
+              <div
+                style="
+                  width: 20px;
+                  height: 20px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <iconify-icon
+                  icon="lucide:heart"
+                  style="font-size: 20px; color: var(--foreground)"
+                ></iconify-icon>
+              </div>
+            </div>
+            <div class="icon-btn" data-media-type="banani-button">
+              <div
+                style="
+                  width: 20px;
+                  height: 20px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <iconify-icon
+                  icon="lucide:shopping-bag"
+                  style="font-size: 20px; color: var(--foreground)"
+                ></iconify-icon>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="container">
+          <section class="hero">
+            <div class="hero-text">
+              <div class="hero-kicker">Premium tulip boutique</div>
+              <h1 class="hero-title">
+                Minimalist bouquets for every light-filled home.
+              </h1>
+              <p class="hero-subtitle">
+                Hand-picked tulips arranged in a clean Scandinavian aesthetic,
+                delivered the same day within the city.
+              </p>
+            </div>
+            <div class="hero-media" data-media-type="banani-button">
+              <img
+                class="hero-img"
+                data-aspect-ratio="4:5"
+                data-query="Scandinavian minimalist premium white tulip bouquet on pure white background, top-down composition, elegant floral boutique aesthetic, soft daylight, neutral palette"
+                alt="Featured white tulip bouquet"
+                src="https://storage.googleapis.com/banani-generated-images/generated-images/fd632ab9-5d62-4d28-a72e-e57783a946fa.jpg"
+              />
+            </div>
+          </section>
+
+          <div class="toolbar">
+            <div class="chip-row">
+              <div class="chip chip--active" data-media-type="banani-button">
+                All tulips
+              </div>
+              <div class="chip" data-media-type="banani-button">White</div>
+              <div class="chip" data-media-type="banani-button">Pastel mix</div>
+              <div class="chip" data-media-type="banani-button">Seasonal</div>
+            </div>
+            <div class="search-row">
+              <div class="search-input" data-media-type="banani-button">
+                <div
+                  style="
+                    width: 18px;
+                    height: 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <iconify-icon
+                    icon="lucide:search"
+                    style="font-size: 18px; color: var(--muted-foreground)"
+                  ></iconify-icon>
+                </div>
+                <span>Search tulip bouquets</span>
+              </div>
+              <div class="icon-btn" data-media-type="banani-button">
+                <div
+                  style="
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <iconify-icon
+                    icon="lucide:sliders-horizontal"
+                    style="font-size: 20px; color: var(--foreground)"
+                  ></iconify-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="section-header">
+              <h2 class="section-title">Featured bouquets</h2>
+              <span class="section-link" data-media-type="banani-button"
+                >View all</span
+              >
+            </div>
+            <div class="product-grid">
+              <div class="product-card" data-media-type="banani-button">
+                <div class="product-media">
+                  <img
+                    class="product-img"
+                    data-aspect-ratio="3:4"
+                    data-query="minimalist white tulip bouquet close-up, neutral background, Scandinavian floral boutique style"
+                    alt="Nordic White tulip bouquet"
+                    src="https://storage.googleapis.com/banani-generated-images/generated-images/d6471770-84ed-470c-8349-c8f125af64ac.jpg"
+                  />
+                </div>
+                <div class="product-name">Nordic White Tulips</div>
+                <div class="product-meta">
+                  <span class="product-price">$65</span>
+                  <span class="product-tag">Bestseller</span>
+                </div>
+              </div>
+
+              <div class="product-card" data-media-type="banani-button">
+                <div class="product-media">
+                  <img
+                    class="product-img"
+                    data-aspect-ratio="3:4"
+                    data-query="soft pastel pink and white tulip bouquet, airy composition, white background, premium floral shop"
+                    alt="Pastel Dawn tulip bouquet"
+                    src="https://storage.googleapis.com/banani-generated-images/generated-images/654367ff-6b58-4222-83cb-6afc65b11ab5.jpg"
+                  />
+                </div>
+                <div class="product-name">Pastel Dawn Mix</div>
+                <div class="product-meta">
+                  <span class="product-price">$72</span>
+                  <span class="product-tag">New</span>
+                </div>
+              </div>
+
+              <div class="product-card" data-media-type="banani-button">
+                <div class="product-media">
+                  <img
+                    class="product-img"
+                    data-aspect-ratio="3:4"
+                    data-query="deep burgundy and white tulip bouquet, minimal backdrop, modern floral boutique aesthetic"
+                    alt="Noir Contrast tulip bouquet"
+                    src="https://storage.googleapis.com/banani-generated-images/generated-images/dd41c14f-459e-4c2a-b9ff-d14fe24104e9.jpg"
+                  />
+                </div>
+                <div class="product-name">Noir Contrast</div>
+                <div class="product-meta">
+                  <span class="product-price">$78</span>
+                  <span class="product-tag">Limited</span>
+                </div>
+              </div>
+
+              <div class="product-card" data-media-type="banani-button">
+                <div class="product-media">
+                  <img
+                    class="product-img"
+                    data-aspect-ratio="3:4"
+                    data-query="bright yellow tulip bouquet with green stems, white studio background, Scandinavian style"
+                    alt="Sunlit Meadow tulip bouquet"
+                    src="https://storage.googleapis.com/banani-generated-images/generated-images/75f9e861-9578-43c7-b842-3227e0e73ef9.jpg"
+                  />
+                </div>
+                <div class="product-name">Sunlit Meadow</div>
+                <div class="product-meta">
+                  <span class="product-price">$59</span>
+                  <span class="product-tag">Spring</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </body>
+  </html>
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #0b0b0b;
+      --border: #00000014;
+      --input: #f6f6f6;
+      --primary: #000000;
+      --primary-foreground: #ffffff;
+      --secondary: #f3f4f6;
+      --secondary-foreground: #0b0b0b;
+      --muted: #f8f8f9;
+      --muted-foreground: #8b8b8b;
+      --success: #e6f9f0;
+      --success-foreground: #0b6d3a;
+      --accent: #fdecef;
+      --accent-foreground: #9b2b2b;
+      --destructive: #fff1f0;
+      --destructive-foreground: #a50e0e;
+      --warning: #fff7e6;
+      --warning-foreground: #7a5a00;
+      --card: #ffffff;
+      --card-foreground: #0b0b0b;
+      --sidebar: #ffffff;
+      --sidebar-foreground: #0b0b0b;
+      --sidebar-primary: #000000;
+      --sidebar-primary-foreground: #ffffff;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      --font-family-body: Inter;
+    }
+  </style>
+</div>

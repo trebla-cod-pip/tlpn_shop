@@ -4,63 +4,85 @@
 {% block title %}{{ product.name }} - Tulipa{% endblock %}
 
 {% block content %}
-<div class="app" style="height: 100%; display: flex; flex-direction: column; background: var(--background); color: var(--foreground); overflow-y: auto; overflow-x: hidden;">
+<div class="app">
     <!-- Header -->
-    <header class="hdr" style="display: flex; justify-content: space-between; align-items: center; padding: 32px 32px 16px; flex-shrink: 0;">
-        <div class="icn" onclick="window.history.back()" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-arrow-left"></use></svg>
+    <header class="hdr">
+        <div class="hdr-left">
+            <div class="icn" onclick="window.history.back()" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-arrow-left"></use></svg>
+            </div>
+            <div class="brand-name" style="margin-left: 12px;">Tulipa</div>
         </div>
-        <div class="brand" style="font-size: 14px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; margin-left: 4px;">Tulipa</div>
-        <div class="icn" onclick="navigateTo('/bag/')" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-shopping-bag"></use></svg>
+        <div class="hdr-right">
+            <!-- Desktop Navigation -->
+            <nav class="desktop-nav" style="display: none; margin-right: 16px;">
+                <a href="/profile/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-user"></use></svg>
+                    <span>Профиль</span>
+                </a>
+                <a href="/favorites/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-heart"></use></svg>
+                    <span>Избранное</span>
+                </a>
+                <a href="/bag/" class="nav-item">
+                    <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-shopping-bag"></use></svg>
+                    <span>Корзина</span>
+                </a>
+            </nav>
+            <div class="icn" onclick="navigateTo('/bag/')" style="width: 44px; height: 44px;">
+                <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-shopping-bag"></use></svg>
+            </div>
         </div>
     </header>
 
-    <!-- Loading state -->
-    <div id="loading" class="loading" style="flex: 1;">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Error state -->
-    <div id="error" class="error-message" style="display: none; margin: 24px;">
-        Не удалось загрузить товар. Попробуйте снова.
-    </div>
-
-    <!-- Product Content -->
-    <div id="product-content" style="display: none; flex: 1; flex-direction: column;">
-        <!-- Hero Image -->
-        <div class="hero" style="padding: 16px 32px 40px; flex-shrink: 0;">
-            <img id="product-image" class="img" style="width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: var(--radius-lg);" 
-                 src="" alt="">
+    <div class="container">
+        <!-- Loading state -->
+        <div id="loading" class="loading" style="min-height: 60vh;">
+            <div class="spinner"></div>
         </div>
 
-        <!-- Product Info -->
-        <div class="cnt" style="padding: 0 32px; flex: 1; display: flex; flex-direction: column;">
-            <h1 id="product-title" class="title" style="font-size: 32px; font-weight: 400; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 8px;"></h1>
-            <span id="product-price" class="price" style="font-size: 20px; font-weight: 400; color: var(--foreground); margin-bottom: 24px;"></span>
-            <p id="product-description" class="desc" style="font-size: 15px; line-height: 1.7; color: var(--muted-foreground); margin-bottom: 48px; font-weight: 400;"></p>
-            
-            <!-- Quantity Selector -->
-            <div class="opt" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px;">
-                <span class="lbl" style="font-size: 15px; font-weight: 500;">Количество</span>
-                <div class="qty" style="display: flex; align-items: center; gap: 24px;">
-                    <div class="q-btn" id="btn-minus" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
-                        <svg class="icon" style="width: 16px; height: 16px;"><use href="#icon-minus"></use></svg>
+        <!-- Error state -->
+        <div id="error" class="error-message" style="display: none;">
+            Не удалось загрузить товар. Попробуйте снова.
+        </div>
+
+        <!-- Product Content -->
+        <div id="product-content" style="display: none;">
+            <div class="product-detail-grid" style="display: grid; grid-template-columns: 1fr; gap: 48px; padding: 40px 0 80px;">
+                <!-- Product Image -->
+                <div class="product-image-section">
+                    <img id="product-image" class="img"
+                         src="" alt=""
+                         style="width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: var(--radius-lg);">
+                </div>
+
+                <!-- Product Info -->
+                <div class="product-info-section" style="display: flex; flex-direction: column; gap: 24px;">
+                    <h1 id="product-title" class="title" style="font-size: 32px; font-weight: 400; line-height: 1.15; letter-spacing: -0.5px;"></h1>
+                    <span id="product-price" class="price" style="font-size: 24px; font-weight: 500; color: var(--foreground);"></span>
+                    <p id="product-description" class="desc" style="font-size: 16px; line-height: 1.7; color: var(--muted-foreground);"></p>
+
+                    <!-- Quantity Selector -->
+                    <div class="opt" style="display: flex; justify-content: space-between; align-items: center; padding: 24px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+                        <span class="lbl" style="font-size: 15px; font-weight: 500;">Количество</span>
+                        <div class="qty" style="display: flex; align-items: center; gap: 24px;">
+                            <div class="q-btn" id="btn-minus" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
+                                <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-minus"></use></svg>
+                            </div>
+                            <span id="quantity-value" class="q-val" style="font-size: 18px; font-weight: 500; min-width: 24px; text-align: center;">1</span>
+                            <div class="q-btn" id="btn-plus" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
+                                <svg class="icon" style="width: 18px; height: 18px;"><use href="#icon-plus"></use></svg>
+                            </div>
+                        </div>
                     </div>
-                    <span id="quantity-value" class="q-val" style="font-size: 16px; font-weight: 500; min-width: 16px; text-align: center;">1</span>
-                    <div class="q-btn" id="btn-plus" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; cursor: pointer;">
-                        <svg class="icon" style="width: 16px; height: 16px;"><use href="#icon-plus"></use></svg>
-                    </div>
+
+                    <!-- Add to Cart Button -->
+                    <button id="add-to-cart-btn" class="add" style="background: var(--foreground); color: var(--background); width: 100%; padding: 20px 32px; border-radius: var(--radius-xl); display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 500; border: none; letter-spacing: 0.5px; cursor: pointer;">
+                        <span>В корзину</span>
+                        <span id="total-price"></span>
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Add to Cart Button -->
-        <div class="btm" style="padding: 0 32px 40px; margin-top: auto; flex-shrink: 0;">
-            <button id="add-to-cart-btn" class="add" style="background: var(--foreground); color: var(--background); width: 100%; padding: 20px 24px; border-radius: var(--radius-xl); display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 500; border: none; letter-spacing: 0.5px; cursor: pointer;">
-                <span>В корзину</span> 
-                <span id="total-price"></span>
-            </button>
         </div>
     </div>
 </div>
@@ -217,8 +239,9 @@
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
+        updateNavVisibility();
         loadProduct();
-        
+
         // Обработчики кнопок количества
         document.getElementById('btn-minus').addEventListener('click', () => {
             if (quantity > 1) {
@@ -226,14 +249,28 @@
                 updateQuantity();
             }
         });
-        
+
         document.getElementById('btn-plus').addEventListener('click', () => {
             quantity++;
             updateQuantity();
         });
-        
+
         // Обработчик кнопки "В корзину"
         document.getElementById('add-to-cart-btn').addEventListener('click', addToCart);
     });
+
+    // Показываем desktop навигацию на больших экранах
+    function updateNavVisibility() {
+        const desktopNav = document.querySelector('.desktop-nav');
+        if (desktopNav) {
+            if (window.innerWidth >= 1024) {
+                desktopNav.style.display = 'flex';
+            } else {
+                desktopNav.style.display = 'none';
+            }
+        }
+    }
+
+    window.addEventListener('resize', updateNavVisibility);
 </script>
 {% endblock %}
