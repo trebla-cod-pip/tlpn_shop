@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
+    'django.contrib.sites',
     # Third party
     'imagekit',
     'rest_framework',
@@ -68,6 +70,8 @@ INSTALLED_APPS = [
     'telegram_app',
     'analytics',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -188,3 +192,10 @@ except ImportError:
 # Добавляем заголовки кэширования для статических файлов
 if not DEBUG:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+# ============================================================================
+# Sitemap Settings
+# ============================================================================
+# Домен сайта для генерации sitemap.xml
+SITEMAP_DOMAIN = 'tlpn.shop'
+SITEMAP_PROTOCOL = 'https'
