@@ -15,7 +15,7 @@ class OrderStatus(models.TextChoices):
 class Order(models.Model):
     """Заказ покупателя"""
     # Данные из Telegram
-    telegram_user_id = models.BigIntegerField(verbose_name='Telegram User ID')
+    telegram_user_id = models.BigIntegerField(null=True, blank=True, verbose_name='Telegram User ID')
     telegram_username = models.CharField(max_length=100, blank=True, verbose_name='Telegram username')
     telegram_first_name = models.CharField(max_length=100, blank=True, verbose_name='Имя Telegram')
     telegram_last_name = models.CharField(max_length=100, blank=True, verbose_name='Фамилия Telegram')

@@ -190,11 +190,27 @@
     let cart = [];
     let total = 0;
     let user = {};
+    let tgLoaded = false;
 
     // Инициализация Telegram WebApp
     function initTelegramUser() {
-        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-            const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+        // Ждём загрузки Telegram WebApp
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            console.log('[TMA] WebApp ещё не загружен, пробуем через 100мс');
+            setTimeout(initTelegramUser, 100);
+            return;
+        }
+
+        const tg = window.Telegram.WebApp;
+        tgLoaded = true;
+        tg.ready();
+
+        // Разворачиваем на весь экран
+        tg.expand();
+
+        // Получаем данные пользователя
+        if (tg.initDataUnsafe?.user) {
+            const tgUser = tg.initDataUnsafe.user;
             user = {
                 id: tgUser.id,
                 username: tgUser.username || '',
@@ -202,14 +218,15 @@
                 last_name: tgUser.last_name || '',
                 phone: tgUser.phone || '',
             };
-            
+
+            console.log('[TMA] Пользователь:', user);
+
             // Haptic feedback при входе
-            if (window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
             }
-            
-            // Автозаполнение формы если открыта
-            fillCheckoutForm();
+        } else {
+            console.log('[TMA] Нет данных пользователя (веб-версия или ошибка)');
         }
     }
 
@@ -338,10 +355,17 @@
 
     // Показать выбор способа связи
     function showContactMethod() {
+        console.log('[TMA] showContactMethod вызван, user:', user, 'tgLoaded:', tgLoaded);
+
         const modal = document.getElementById('contact-method-modal');
         const tgDataDiv = document.getElementById('telegram-data');
         const tgDataContent = document.getElementById('tg-data-content');
-        
+
+        if (!modal) {
+            console.error('[TMA] Modal element not found!');
+            return;
+        }
+
         // Сбрасываем состояние
         selectedContactMethod = null;
         document.getElementById('contact-next-btn').disabled = true;
@@ -350,7 +374,7 @@
         document.getElementById('contact-next-btn').style.cursor = 'not-allowed';
         document.getElementById('phone-input-container').style.display = 'none';
         document.getElementById('manual-phone').value = '';
-        
+
         // Показываем данные из Telegram если есть
         if (user.id) {
             tgDataDiv.style.display = 'block';
@@ -364,15 +388,16 @@
             if (user.phone) {
                 parts.push(user.phone);
             }
-            tgDataContent.innerHTML = parts.length > 0 
+            tgDataContent.innerHTML = parts.length > 0
                 ? parts.map(p => `<div>• ${p}</div>`).join('')
                 : '<div>• ID: ' + user.id + '</div>';
         } else {
             tgDataDiv.style.display = 'none';
         }
-        
+
         modal.style.display = 'flex';
-        
+        console.log('[TMA] Modal показан');
+
         // Haptic feedback
         if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
@@ -529,6 +554,14 @@
     async function submitOrder(event) {
         event.preventDefault();
 
+        console.log('[TMA] submitOrder вызван');
+        console.log('[TMA] orderData:', {
+            items: cart.length,
+            phone: document.getElementById('phone').value,
+            telegram_user_id: user?.id,
+            preferred_contact_method: selectedContactMethod
+        });
+
         const submitBtn = document.getElementById('submit-btn');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Отправка...';
@@ -546,7 +579,7 @@
             delivery_date: document.getElementById('delivery_date').value,
             delivery_time: document.getElementById('delivery_time').value,
             comment: document.getElementById('comment').value,
-            telegram_user_id: user?.id,
+            telegram_user_id: user?.id || null,
             telegram_username: user?.username,
             telegram_first_name: user?.first_name,
             telegram_last_name: user?.last_name,
@@ -554,6 +587,8 @@
         };
 
         try {
+            console.log('[TMA] Отправка запроса на /api/orders/');
+
             const response = await fetch('/api/orders/', {
                 method: 'POST',
                 headers: {
@@ -562,12 +597,16 @@
                 body: JSON.stringify(orderData)
             });
 
+            console.log('[TMA] Response status:', response.status);
+
             if (!response.ok) {
                 const error = await response.json();
+                console.error('[TMA] Error response:', error);
                 throw new Error(error.error || 'Не удалось создать заказ');
             }
 
             const order = await response.json();
+            console.log('[TMA] Заказ создан:', order);
 
             // Очищаем корзину
             localStorage.removeItem('cart');
@@ -600,7 +639,7 @@
             }
 
         } catch (error) {
-            console.error('Error creating order:', error);
+            console.error('[TMA] Error creating order:', error);
             alert(`Ошибка: ${error.message}`);
 
             if (window.Telegram?.WebApp?.HapticFeedback) {

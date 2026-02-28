@@ -25,7 +25,7 @@ class OrderCreateSerializer(serializers.Serializer):
     comment = serializers.CharField(required=False, allow_blank=True)
     
     # Данные Telegram (передаются из WebApp)
-    telegram_user_id = serializers.IntegerField()
+    telegram_user_id = serializers.IntegerField(required=False, allow_null=True)
     telegram_username = serializers.CharField(required=False, allow_blank=True)
     telegram_first_name = serializers.CharField(required=False, allow_blank=True)
     telegram_last_name = serializers.CharField(required=False, allow_blank=True)
