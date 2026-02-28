@@ -4,12 +4,13 @@
 {% block title %}Главная - Tulipa{% endblock %}
 
 {% block extra_head %}
-<!-- Preload hero image -->
+<!-- Preload hero image с высоким приоритетом -->
 <link rel="preload" as="image" href="/media/products/homepage.webp" type="image/webp" fetchpriority="high">
-{% endblock %}
 
-{% block extra_css %}
-<link rel="preload" as="image" href="/media/products/homepage.webp" type="image/webp">
+<!-- Критический CSS для hero секции -->
+<style>
+.hero{padding:8px 24px 24px;display:flex;flex-direction:column;gap:16px}.hero-media{width:100%;aspect-ratio:4/3;min-height:220px;border-radius:var(--radius-lg);overflow:hidden;background:var(--muted)}.hero-img{width:100%;height:100%;object-fit:cover;display:block}
+</style>
 {% endblock %}
 
 {% block content %}

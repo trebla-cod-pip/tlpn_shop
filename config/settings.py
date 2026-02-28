@@ -181,3 +181,10 @@ try:
     from .local_settings import *
 except ImportError:
     pass
+
+# ============================================================================
+# Caching Headers для статики (PageSpeed optimization)
+# ============================================================================
+# Добавляем заголовки кэширования для статических файлов
+if not DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
