@@ -81,6 +81,13 @@
     </nav>
 </div>
 
+<!-- Временная кнопка сброса localStorage (для отладки) -->
+<button id="debug-reset-btn" onclick="clearStorageDebug()" 
+        style="position:fixed;bottom:80px;right:10px;z-index:9999;padding:10px 16px;background:#dc3545;color:white;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);opacity:0.8;"
+        title="Сбросить localStorage">
+    🗑️ Сброс данных
+</button>
+
 <!-- Contact Method Modal -->
 <div id="contact-method-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end;">
     <div class="contact-method-form" style="background: var(--background); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 32px 24px; max-height: 90vh; overflow-y: auto;">
@@ -184,9 +191,13 @@
                                style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Время</label>
-                        <input type="text" id="delivery_time" name="delivery_time" placeholder="10:00-12:00"
-                               style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background);">
+                        <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted-foreground);">Время доставки</label>
+                        <select id="delivery_time" name="delivery_time"
+                                style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; background: var(--background); cursor: pointer;">
+                            <option value="В течение дня">В течение дня</option>
+                            <option value="С 9:00 до 16:00">С 9:00 до 16:00</option>
+                            <option value="С 16:00 до 23:00">С 16:00 до 23:00</option>
+                        </select>
                     </div>
                 </div>
 
@@ -490,11 +501,33 @@
             if (!minOrderWarning) {
                 const warningEl = document.createElement('div');
                 warningEl.id = 'min-order-warning';
-                warningEl.style.cssText = 'padding: 16px 24px; background: var(--warning); color: var(--warning-foreground); border-radius: var(--radius-md); margin: 16px 24px; font-size: 13px; font-weight: 500; text-align: center;';
-                warningEl.innerHTML = `⚠️ Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт. Сейчас в корзине: <strong>${itemCount} шт.</strong> Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.`;
+                warningEl.style.cssText = 'padding: 20px 24px; background: var(--warning); color: var(--warning-foreground); border-radius: var(--radius-md); margin: 16px 24px; font-size: 14px; font-weight: 500; text-align: center; border: 1px solid var(--warning-foreground);';
+                warningEl.innerHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <span style="font-size: 16px;">⚠️</span> 
+                        <strong>Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт.</strong>
+                    </div>
+                    <div style="font-size: 13px; margin-bottom: 8px;">
+                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${itemCount} шт.</strong>
+                    </div>
+                    <div style="font-size: 13px; padding-top: 8px; border-top: 1px solid var(--warning-foreground); opacity: 0.8;">
+                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.</strong>
+                    </div>
+                `;
                 document.querySelector('.cart-summary').insertBefore(warningEl, checkoutBtn);
             } else {
-                minOrderWarning.innerHTML = `⚠️ Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт. Сейчас в корзине: <strong>${itemCount} шт.</strong> Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.`;
+                minOrderWarning.innerHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <span style="font-size: 16px;">⚠️</span> 
+                        <strong>Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт.</strong>
+                    </div>
+                    <div style="font-size: 13px; margin-bottom: 8px;">
+                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${itemCount} шт.</strong>
+                    </div>
+                    <div style="font-size: 13px; padding-top: 8px; border-top: 1px solid var(--warning-foreground); opacity: 0.8;">
+                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.</strong>
+                    </div>
+                `;
                 minOrderWarning.style.display = 'block';
             }
         } else {
@@ -1010,6 +1043,15 @@
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', loadCart);
+
+    // Функция сброса localStorage (для отладки)
+    function clearStorageDebug() {
+        if (confirm('Сбросить все данные?\n\nЭто удалит:\n• Корзину\n• Сохранённый профиль\n• Все данные сайта')) {
+            localStorage.clear();
+            alert('Данные сброшены! Страница перезагрузится.');
+            location.reload();
+        }
+    }
 </script>
 {% endblock %}
 
