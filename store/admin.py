@@ -129,8 +129,17 @@ class ProductAdmin(admin.ModelAdmin):
         if not obj.image:
             return format_html('<span style="color: #999;">❌ Нет изображения</span>')
         
-        webp_400 = '✅' if obj.image_webp_400 and obj.image_webp_400.exists() else '❌'
-        webp_800 = '✅' if obj.image_webp_800 and obj.image_webp_800.exists() else '❌'
+        def check_webp(webp_field):
+            """Проверяет существование WebP файла"""
+            try:
+                if not webp_field:
+                    return False
+                return webp_field.storage.exists(webp_field.name)
+            except Exception:
+                return False
+        
+        webp_400 = '✅' if check_webp(obj.image_webp_400) else '❌'
+        webp_800 = '✅' if check_webp(obj.image_webp_800) else '❌'
         
         return format_html(f'{webp_400} 400px | {webp_800} 800px')
     has_webp.short_description = 'WebP статус'
@@ -140,14 +149,26 @@ class ProductAdmin(admin.ModelAdmin):
         if not obj.image:
             return 'Изображение не загружено'
         
+        def check_webp(webp_field):
+            """Проверяет существование WebP файла"""
+            try:
+                if not webp_field:
+                    return None, False
+                exists = webp_field.storage.exists(webp_field.name)
+                return webp_field.url if exists else None, exists
+            except Exception:
+                return None, False
+        
         status = []
-        if obj.image_webp_400 and obj.image_webp_400.exists():
-            status.append(f'✅ 400px: {obj.image_webp_400.url}')
+        url_400, exists_400 = check_webp(obj.image_webp_400)
+        if exists_400:
+            status.append(f'✅ 400px: {url_400}')
         else:
             status.append('❌ 400px: не сгенерировано')
             
-        if obj.image_webp_800 and obj.image_webp_800.exists():
-            status.append(f'✅ 800px: {obj.image_webp_800.url}')
+        url_800, exists_800 = check_webp(obj.image_webp_800)
+        if exists_800:
+            status.append(f'✅ 800px: {url_800}')
         else:
             status.append('❌ 800px: не сгенерировано')
         

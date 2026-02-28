@@ -9,9 +9,22 @@ Management command для генерации WebP изображений для 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from store.models import Product
+from imagekit.cachefiles import ImageCacheFile
+import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def imagekit_file_exists(imagekit_file):
+    """Проверяет существует ли файл ImageKit"""
+    try:
+        if not imagekit_file:
+            return False
+        # Проверяем через storage
+        return imagekit_file.storage.exists(imagekit_file.name)
+    except Exception:
+        return False
 
 
 class Command(BaseCommand):
@@ -57,13 +70,15 @@ class Command(BaseCommand):
             try:
                 # Генерируем image_webp_400
                 generated_400 = False
-                if regenerate_all or not product.image_webp_400.exists():
+                exists_400 = imagekit_file_exists(product.image_webp_400)
+                if regenerate_all or not exists_400:
                     product.image_webp_400.generate()
                     generated_400 = True
 
                 # Генерируем image_webp_800
                 generated_800 = False
-                if regenerate_all or not product.image_webp_800.exists():
+                exists_800 = imagekit_file_exists(product.image_webp_800)
+                if regenerate_all or not exists_800:
                     product.image_webp_800.generate()
                     generated_800 = True
 
