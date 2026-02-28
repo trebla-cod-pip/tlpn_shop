@@ -2,6 +2,9 @@ from rest_framework import serializers
 from orders.models import Order, OrderItem
 from store.models import Product
 
+# Минимальное количество товаров в заказе
+MIN_ORDER_QUANTITY = 10
+
 
 class OrderItemSerializer(serializers.Serializer):
     """Товар в заказе (для создания)"""
@@ -17,42 +20,50 @@ class OrderCreateSerializer(serializers.Serializer):
     # Контактные данные
     phone = serializers.CharField(max_length=25)
     email = serializers.EmailField(required=False, allow_blank=True)
-    
+
     # Доставка
     delivery_address = serializers.CharField()
     delivery_date = serializers.DateField()
     delivery_time = serializers.CharField(required=False, allow_blank=True)
     comment = serializers.CharField(required=False, allow_blank=True)
-    
+
     # Данные Telegram (передаются из WebApp)
     telegram_user_id = serializers.IntegerField(required=False, allow_null=True)
     telegram_username = serializers.CharField(required=False, allow_blank=True)
     telegram_first_name = serializers.CharField(required=False, allow_blank=True)
     telegram_last_name = serializers.CharField(required=False, allow_blank=True)
-    
+
     # Предпочтительный способ связи
     preferred_contact_method = serializers.CharField(required=False, default='telegram')
 
     def validate_items(self, items):
         if not items:
             raise serializers.ValidationError("Корзина пуста")
-        
+
+        # Проверяем минимальное количество товаров в заказе
+        total_quantity = sum(item.get('quantity', 1) for item in items)
+        if total_quantity < MIN_ORDER_QUANTITY:
+            raise serializers.ValidationError(
+                f"Минимальное количество товаров в заказе — {MIN_ORDER_QUANTITY} шт. "
+                f"Сейчас в корзине {total_quantity} шт."
+            )
+
         validated_items = []
         for item in items:
             try:
                 product = Product.objects.get(id=item['product_id'], is_active=True)
             except Product.DoesNotExist:
                 raise serializers.ValidationError(f"Товар с ID {item['product_id']} не найден")
-            
+
             if product.stock < item['quantity']:
                 raise serializers.ValidationError(f"Недостаточно товара: {product.name}")
-            
+
             validated_items.append({
                 'product': product,
                 'quantity': item['quantity'],
                 'price': product.price
             })
-        
+
         return validated_items
 
     def create(self, validated_data):

@@ -214,6 +214,7 @@
     let user = {};
     let tgLoaded = false;
     let userContactsLoaded = false;
+    const MIN_ORDER_QUANTITY = 10; // Минимальное количество товаров в заказе
 
     function normalizeUsername(value) {
         return (value || '').toString().trim().replace(/^@+/, '');
@@ -471,11 +472,54 @@
         const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
         document.getElementById('items-count').textContent = `${itemCount} товар${itemCount === 1 ? '' : (itemCount < 5 ? 'а' : 'ов')}`;
         document.getElementById('total-amount').textContent = `${total.toFixed(2)} ₽`;
+
+        // Проверка минимального количества товаров
+        const checkoutBtn = document.querySelector('.checkout-btn');
+        const minOrderWarning = document.getElementById('min-order-warning');
         
+        if (itemCount < MIN_ORDER_QUANTITY) {
+            // Блокируем кнопку оформления
+            if (checkoutBtn) {
+                checkoutBtn.disabled = true;
+                checkoutBtn.style.opacity = '0.5';
+                checkoutBtn.style.cursor = 'not-allowed';
+                checkoutBtn.textContent = `Минимум ${MIN_ORDER_QUANTITY} шт. для заказа`;
+            }
+            // Показываем предупреждение если еще не создано
+            if (!minOrderWarning) {
+                const warningEl = document.createElement('div');
+                warningEl.id = 'min-order-warning';
+                warningEl.style.cssText = 'padding: 16px 24px; background: var(--warning); color: var(--warning-foreground); border-radius: var(--radius-md); margin: 16px 24px; font-size: 13px; font-weight: 500; text-align: center;';
+                warningEl.innerHTML = `⚠️ Минимальное количество товаров в заказе — <strong>${MIN_ORDER_QUANTITY} шт.</strong> Сейчас в корзине: <strong>${itemCount} шт.</strong>`;
+                document.querySelector('.cart-summary').insertBefore(warningEl, checkoutBtn);
+            } else {
+                minOrderWarning.innerHTML = `⚠️ Минимальное количество товаров в заказе — <strong>${MIN_ORDER_QUANTITY} шт.</strong> Сейчас в корзине: <strong>${itemCount} шт.</strong>`;
+                minOrderWarning.style.display = 'block';
+            }
+        } else {
+            // Разблокируем кнопку
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.style.opacity = '1';
+                checkoutBtn.style.cursor = 'pointer';
+                checkoutBtn.textContent = 'Оформить заказ';
+            }
+            // Скрываем предупреждение
+            if (minOrderWarning) {
+                minOrderWarning.style.display = 'none';
+            }
+        }
+
         // Обновляем MainButton если открыта форма
         if (window.Telegram?.WebApp?.MainButton?.isVisible) {
             const tg = window.Telegram.WebApp;
-            tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
+            if (itemCount < MIN_ORDER_QUANTITY) {
+                tg.MainButton.setText(`МИНИМУМ ${MIN_ORDER_QUANTITY} ШТ.`);
+                tg.MainButton.disable();
+            } else {
+                tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
+                tg.MainButton.enable();
+            }
         }
     }
 
@@ -758,6 +802,16 @@
         event.preventDefault();
 
         console.log('[TMA] submitOrder вызван');
+
+        // Проверка минимального количества товаров
+        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        if (itemCount < MIN_ORDER_QUANTITY) {
+            alert(`Минимальное количество товаров в заказе — ${MIN_ORDER_QUANTITY} шт. Сейчас в корзине: ${itemCount} шт.`);
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+            }
+            return;
+        }
 
         // Валидация данных перед отправкой
         const phone = document.getElementById('phone').value.trim();
