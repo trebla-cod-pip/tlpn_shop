@@ -125,21 +125,19 @@ class Product(models.Model):
     @property
     def image_webp_url(self):
         """Возвращает URL WebP изображения или оригинал если WebP нет"""
-        # Сначала пробуем image_webp (ручное WebP)
-        if self.image_webp:
-            try:
-                return self.image_webp.url
-            except:
-                pass
+        if not self.image:
+            return None
         
-        # Потом пробуем image_webp_800 (ImageKit кэш)
+        # Пробуем image_webp_800 (ImageKit кэш)
         try:
-            return self.image_webp_800.url
+            url = self.image_webp_800.url
+            if url:
+                return url
         except:
             pass
         
         # Fallback на оригинал
-        return self.image.url if self.image else None
+        return self.image.url
 
 
 class TelegramUser(models.Model):
