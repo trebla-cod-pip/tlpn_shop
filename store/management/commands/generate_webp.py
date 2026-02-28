@@ -16,26 +16,41 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def force_generate_webp(imagekit_field):
+def force_generate_webp(imagekit_field, product_name):
     """Принудительная генерация WebP с удалением старого файла"""
     if not imagekit_field:
+        logger.warning(f"[{product_name}] imagekit_field is None")
         return False
     
     try:
         # Получаем путь к файлу
         file_path = imagekit_field.name
+        logger.info(f"[{product_name}] file_path: {file_path}")
         
         # Если файл существует - удаляем
-        if imagekit_field.storage.exists(file_path):
-            imagekit_field.storage.delete(file_path)
+        try:
+            if imagekit_field.storage.exists(file_path):
+                imagekit_field.storage.delete(file_path)
+                logger.info(f"[{product_name}] Deleted old file")
+        except Exception as e:
+            logger.warning(f"[{product_name}] Can't delete: {e}")
         
         # Генерируем заново
+        logger.info(f"[{product_name}] Generating new file...")
         imagekit_field.generate()
         
         # Проверяем что сгенерировалось
-        return imagekit_field.storage.exists(file_path)
+        exists = imagekit_field.storage.exists(file_path)
+        logger.info(f"[{product_name}] Generated: {exists}")
+        
+        if exists:
+            logger.info(f"[{product_name}] URL: {imagekit_field.url}")
+        
+        return exists
     except Exception as e:
-        logger.error(f"Ошибка генерации WebP: {e}")
+        logger.error(f"[{product_name}] Ошибка генерации WebP: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
 
 
@@ -91,8 +106,8 @@ class Command(BaseCommand):
                 if regenerate_all:
                     self.stdout.write('(перегенерация) ', ending=' ')
                     # Удаляем и генерируем заново
-                    gen_400 = force_generate_webp(product.image_webp_400)
-                    gen_800 = force_generate_webp(product.image_webp_800)
+                    gen_400 = force_generate_webp(product.image_webp_400, product.name)
+                    gen_800 = force_generate_webp(product.image_webp_800, product.name)
                     generated = gen_400 or gen_800
                 else:
                     # Просто генерируем если нет
