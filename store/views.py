@@ -118,8 +118,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_featured']
     search_fields = ['name', 'description', 'tags']
-    ordering_fields = ['price', 'created_at', 'name']
-    ordering = ['-created_at']
+    ordering_fields = ['price', 'created_at', 'name', 'display_order']
+    ordering = ['display_order', '-created_at']  # Сортировка по порядку отображения
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
