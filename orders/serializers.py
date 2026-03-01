@@ -1,14 +1,13 @@
 from rest_framework import serializers
 from orders.models import Order, OrderItem
 from store.models import Product
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Минимальное количество товаров в заказе
-MIN_ORDER_QUANTITY = 9
-# Бесплатная доставка от количества
-FREE_DELIVERY_QUANTITY = 35
+# Минимальная сумма заказа (берётся из настроек)
+# FREE_DELIVERY_AMOUNT также из настроек
 
 
 class OrderItemSerializer(serializers.Serializer):
@@ -45,13 +44,20 @@ class OrderCreateSerializer(serializers.Serializer):
         if not items:
             raise serializers.ValidationError("Корзина пуста")
 
-        # Проверяем минимальное количество товаров в заказе
-        total_quantity = sum(item.get('quantity', 1) for item in items)
-        if total_quantity < MIN_ORDER_QUANTITY:
+        # Проверяем минимальную сумму заказа
+        total_amount = sum(
+            Product.objects.get(id=item['product_id']).price * item.get('quantity', 1)
+            for item in items
+        )
+        
+        min_amount = getattr(settings, 'MIN_ORDER_AMOUNT', 1000)
+        free_delivery_amount = getattr(settings, 'FREE_DELIVERY_AMOUNT', 3500)
+        
+        if total_amount < min_amount:
             raise serializers.ValidationError(
-                f"Минимальный заказ — от {MIN_ORDER_QUANTITY} шт. "
-                f"Сейчас в корзине {total_quantity} шт. "
-                f"Доставка до двери — от {FREE_DELIVERY_QUANTITY} шт."
+                f"Минимальная сумма заказа — {min_amount} ₽. "
+                f"Сейчас в корзине {total_amount} ₽. "
+                f"Доставка до двери — от {free_delivery_amount} ₽."
             )
 
         validated_items = []

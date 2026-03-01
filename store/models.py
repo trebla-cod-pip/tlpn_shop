@@ -91,13 +91,14 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='Активен')
     is_featured = models.BooleanField(default=False, verbose_name='Рекомендуемый')
     stock = models.PositiveIntegerField(default=0, verbose_name='Количество на складе')
+    display_order = models.PositiveIntegerField(default=0, verbose_name='Порядок отображения', help_text='Меньшее число = выше на странице')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
 
     class Meta:
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
-        ordering = ['-created_at']
+        ordering = ['display_order', '-created_at']
 
     def save(self, *args, **kwargs):
         if not self.slug:

@@ -39,6 +39,10 @@ TELEGRAM_BOT_TOKEN = '8731264310:AAFHZh55HF5nGdNL8oprvitY8W8srs3II_s'
 TELEGRAM_WEBAPP_URL = 'tlpn.shop'
 TELEGRAM_ADMIN_ID = '645419280'  # ID админа для уведомлений
 
+# Order settings
+MIN_ORDER_AMOUNT = int(os.getenv('MIN_ORDER_AMOUNT', '1000'))  # Минимальная сумма заказа (руб)
+FREE_DELIVERY_AMOUNT = int(os.getenv('FREE_DELIVERY_AMOUNT', '3500'))  # Бесплатная доставка от суммы (руб)
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [

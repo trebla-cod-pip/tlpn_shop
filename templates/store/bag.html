@@ -222,8 +222,8 @@
     let user = {};
     let tgLoaded = false;
     let userContactsLoaded = false;
-    const MIN_ORDER_QUANTITY = 9; // Минимальное количество товаров в заказе
-    const FREE_DELIVERY_QUANTITY = 35; // Доставка до двери
+    const MIN_ORDER_AMOUNT = 1000; // Минимальная сумма заказа (руб)
+    const FREE_DELIVERY_AMOUNT = 3500; // Бесплатная доставка от суммы (руб)
 
     function normalizeUsername(value) {
         return (value || '').toString().trim().replace(/^@+/, '');
@@ -485,14 +485,14 @@
         // Проверка минимального количества товаров
         const checkoutBtn = document.querySelector('.checkout-btn');
         const minOrderWarning = document.getElementById('min-order-warning');
-        
-        if (itemCount < MIN_ORDER_QUANTITY) {
+
+        if (total < MIN_ORDER_AMOUNT) {
             // Блокируем кнопку оформления
             if (checkoutBtn) {
                 checkoutBtn.disabled = true;
                 checkoutBtn.style.opacity = '0.5';
                 checkoutBtn.style.cursor = 'not-allowed';
-                checkoutBtn.textContent = `Минимум ${MIN_ORDER_QUANTITY} шт. для заказа`;
+                checkoutBtn.textContent = `Минимум ${MIN_ORDER_AMOUNT} ₽ для заказа`;
             }
             // Показываем предупреждение если еще не создано
             if (!minOrderWarning) {
@@ -501,28 +501,28 @@
                 warningEl.style.cssText = 'padding: 20px 24px; background: var(--warning); color: var(--warning-foreground); border-radius: var(--radius-md); margin: 16px 24px; font-size: 14px; font-weight: 500; text-align: center; border: 1px solid var(--warning-foreground);';
                 warningEl.innerHTML = `
                     <div style="margin-bottom: 8px;">
-                        <span style="font-size: 16px;">⚠️</span> 
-                        <strong>Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт.</strong>
+                        <span style="font-size: 16px;">⚠️</span>
+                        <strong>Минимальная сумма заказа — ${MIN_ORDER_AMOUNT} ₽</strong>
                     </div>
                     <div style="font-size: 13px; margin-bottom: 8px;">
-                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${itemCount} шт.</strong>
+                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${total.toFixed(0)} ₽</strong>
                     </div>
                     <div style="font-size: 13px; padding-top: 8px; border-top: 1px solid var(--warning-foreground); opacity: 0.8;">
-                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.</strong>
+                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_AMOUNT} ₽</strong>
                     </div>
                 `;
                 document.querySelector('.cart-summary').insertBefore(warningEl, checkoutBtn);
             } else {
                 minOrderWarning.innerHTML = `
                     <div style="margin-bottom: 8px;">
-                        <span style="font-size: 16px;">⚠️</span> 
-                        <strong>Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт.</strong>
+                        <span style="font-size: 16px;">⚠️</span>
+                        <strong>Минимальная сумма заказа — ${MIN_ORDER_AMOUNT} ₽</strong>
                     </div>
                     <div style="font-size: 13px; margin-bottom: 8px;">
-                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${itemCount} шт.</strong>
+                        Сейчас в корзине: <strong style="color: var(--warning-foreground);">${total.toFixed(0)} ₽</strong>
                     </div>
                     <div style="font-size: 13px; padding-top: 8px; border-top: 1px solid var(--warning-foreground); opacity: 0.8;">
-                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.</strong>
+                        🚚 <strong>Доставка до двери — от ${FREE_DELIVERY_AMOUNT} ₽</strong>
                     </div>
                 `;
                 minOrderWarning.style.display = 'block';
@@ -544,8 +544,8 @@
         // Обновляем MainButton если открыта форма
         if (window.Telegram?.WebApp?.MainButton?.isVisible) {
             const tg = window.Telegram.WebApp;
-            if (itemCount < MIN_ORDER_QUANTITY) {
-                tg.MainButton.setText(`МИНИМУМ ${MIN_ORDER_QUANTITY} ШТ.`);
+            if (total < MIN_ORDER_AMOUNT) {
+                tg.MainButton.setText(`МИНИМУМ ${MIN_ORDER_AMOUNT} ₽`);
                 tg.MainButton.disable();
             } else {
                 tg.MainButton.setText(`ОФОРМИТЬ ЗАКАЗ — ${total.toFixed(0)}₽`);
@@ -834,10 +834,9 @@
 
         console.log('[TMA] submitOrder вызван');
 
-        // Проверка минимального количества товаров
-        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-        if (itemCount < MIN_ORDER_QUANTITY) {
-            alert(`Минимальный заказ — от ${MIN_ORDER_QUANTITY} шт. Сейчас в корзине: ${itemCount} шт. Доставка до двери — от ${FREE_DELIVERY_QUANTITY} шт.`);
+        // Проверка минимальной суммы заказа
+        if (total < MIN_ORDER_AMOUNT) {
+            alert(`Минимальная сумма заказа — ${MIN_ORDER_AMOUNT} ₽. Сейчас в корзине: ${total.toFixed(0)} ₽. Доставка до двери — от ${FREE_DELIVERY_AMOUNT} ₽.`);
             if (window.Telegram?.WebApp?.HapticFeedback) {
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }

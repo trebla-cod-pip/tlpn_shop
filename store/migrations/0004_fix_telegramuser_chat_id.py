@@ -32,7 +32,7 @@ def reverse_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('store', '0003_alter_telegramuser_chat_id'),
+        ('store', '0002_product_cart_image_alter_product_tags'),
     ]
 
     operations = [

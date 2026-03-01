@@ -72,13 +72,13 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'created_at')
+    list_display = ('name', 'slug', 'price', 'old_price', 'category', 'is_active', 'is_featured', 'stock', 'display_order', 'created_at')
     list_filter = ('is_active', 'is_featured', 'category', 'created_at')
     search_fields = ('name', 'description', 'tags')
     prepopulated_fields = {}  # Отключаем стандартное prepopulated
-    ordering = ('-created_at',)
+    ordering = ('display_order', '-created_at',)
     readonly_fields = ('discount', 'created_at', 'updated_at')
-    
+
     fieldsets = (
         ('Основная информация', {
             'fields': ('name', 'slug', 'description', 'category')
@@ -90,7 +90,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('image', 'cart_image')
         }),
         ('Настройки отображения', {
-            'fields': ('is_active', 'is_featured', 'tags')
+            'fields': ('is_active', 'is_featured', 'tags', 'display_order')
         }),
         ('Даты', {
             'fields': ('created_at', 'updated_at'),
