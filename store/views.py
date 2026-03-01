@@ -29,9 +29,14 @@ def item(request, slug):
 
 def bag(request):
     """Корзина"""
+    from django.conf import settings
     # Корзина хранится в localStorage на клиенте
     # Session используется только для аналитики
-    return render(request, 'store/bag.html')
+    context = {
+        'MIN_ORDER_AMOUNT': getattr(settings, 'MIN_ORDER_AMOUNT', 1000),
+        'FREE_DELIVERY_AMOUNT': getattr(settings, 'FREE_DELIVERY_AMOUNT', 3500),
+    }
+    return render(request, 'store/bag.html', context)
 
 
 def order_success(request):

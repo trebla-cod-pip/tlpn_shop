@@ -222,8 +222,8 @@
     let user = {};
     let tgLoaded = false;
     let userContactsLoaded = false;
-    const MIN_ORDER_AMOUNT = 1000; // Минимальная сумма заказа (руб)
-    const FREE_DELIVERY_AMOUNT = 3500; // Бесплатная доставка от суммы (руб)
+    const MIN_ORDER_AMOUNT = {{ MIN_ORDER_AMOUNT|default:1000 }}; // Минимальная сумма заказа (руб)
+    const FREE_DELIVERY_AMOUNT = {{ FREE_DELIVERY_AMOUNT|default:3500 }}; // Бесплатная доставка от суммы (руб)
 
     function normalizeUsername(value) {
         return (value || '').toString().trim().replace(/^@+/, '');
