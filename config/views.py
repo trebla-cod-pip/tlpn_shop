@@ -148,8 +148,11 @@ def delivery_info(request):
     """
     Страница с информацией о доставке
     """
+    from django.conf import settings
     context = {
         'PICKUP_ADDRESS': 'ул. Каштановая 9',
         'FREE_DELIVERY_QUANTITY': 35,
+        'MIN_ORDER_AMOUNT': getattr(settings, 'MIN_ORDER_AMOUNT', 1000),
+        'FREE_DELIVERY_AMOUNT': getattr(settings, 'FREE_DELIVERY_AMOUNT', 5000),
     }
     return render(request, 'config/delivery.html', context)

@@ -19,6 +19,18 @@
     <main class="content" style="padding: 24px 20px 40px; flex: 1;">
         <h1 class="page-title" style="font-size: 32px; font-weight: 400; letter-spacing: -0.5px; margin-bottom: 32px;">Доставка</h1>
 
+        <!-- Минимальная сумма заказа -->
+        <div class="delivery-info" style="display: flex; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--border);">
+            <div class="d-icon" style="width: 48px; height: 48px; border-radius: 50%; background: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg class="icon" style="width: 24px; height: 24px;"><use href="#icon-shopping-bag"></use></svg>
+            </div>
+            <div class="d-info" style="display: flex; flex-direction: column;">
+                <h2 class="d-title" style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Минимальная сумма заказа</h2>
+                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Для оформления заказа минимальная сумма должна быть не менее</p>
+                <span class="d-price" style="font-size: 15px; font-weight: 500;">{{ MIN_ORDER_AMOUNT }} ₽</span>
+            </div>
+        </div>
+
         <!-- Delivery Options -->
         <div class="delivery-option" style="display: flex; gap: 16px; padding: 24px 0; border-bottom: 1px solid var(--border);">
             <div class="d-icon" style="width: 48px; height: 48px; border-radius: 50%; background: var(--muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -26,8 +38,8 @@
             </div>
             <div class="d-info" style="display: flex; flex-direction: column;">
                 <h2 class="d-title" style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Курьерская доставка</h2>
-                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Бережная доставка по городу лично в руки. При заказе от 35 тюльпанов — бесплатно.</p>
-                <span class="d-price" style="font-size: 15px; font-weight: 500;">Бесплатно от 35 шт.</span>
+                <p class="d-desc" style="font-size: 14px; color: var(--muted-foreground); line-height: 1.5; margin-bottom: 12px;">Бережная доставка по городу лично в руки. При заказе от {{ FREE_DELIVERY_AMOUNT }} ₽ — бесплатно.</p>
+                <span class="d-price" style="font-size: 15px; font-weight: 500;">Бесплатно от {{ FREE_DELIVERY_AMOUNT }} ₽</span>
             </div>
         </div>
 
