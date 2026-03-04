@@ -279,6 +279,9 @@
 
             // Сохраняем данные пользователя
             saveTelegramUser();
+
+            // Инициализируем логгер посещений
+            initVisitLogger();
         }
 
         function saveTelegramUser() {
@@ -443,6 +446,9 @@
             initExternalScripts();
         }
     </script>
+
+    <!-- Visit Logger для отслеживания сессий -->
+    <script src="{% static 'js/visit-logger.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
 </body>

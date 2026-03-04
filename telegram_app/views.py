@@ -117,6 +117,7 @@ def telegram_save_user(request):
             return JsonResponse({'error': 'User ID required'}, status=400)
 
         from store.models import TelegramUser
+        from telegram_app.models import Message
 
         tg_user, created = TelegramUser.objects.get_or_create(
             telegram_id=user_data['id'],
@@ -137,7 +138,7 @@ def telegram_save_user(request):
         # Проверяем: если chat_id не установлен или это chat_instance (слишком большой)
         current_chat_id = tg_user.chat_id
         should_update = False
-        
+
         if current_chat_id is None:
             should_update = True
             logger.info(f"chat_id не установлен для пользователя {tg_user.telegram_id}")
@@ -147,12 +148,18 @@ def telegram_save_user(request):
         elif len(str(current_chat_id)) > 15:
             should_update = True
             logger.info(f"chat_id слишком длинный (chat_instance), заменяем для пользователя {tg_user.telegram_id}")
-        
+
         if should_update:
             # Сохраняем как int, т.к. поле BigIntegerField
             tg_user.chat_id = int(user_data['id'])
             tg_user.save()
             logger.info(f"Установлен chat_id={tg_user.chat_id} для пользователя {tg_user.telegram_id}")
+
+        # Помечаем сообщения как доставленные при активности пользователя
+        if not created:
+            delivered_count = Message.mark_user_messages_as_delivered(tg_user)
+            if delivered_count > 0:
+                logger.info(f"Помечено {delivered_count} сообщений как delivered для пользователя {tg_user.telegram_id}")
 
         return JsonResponse({
             'success': True,
@@ -172,7 +179,7 @@ def telegram_save_user(request):
 def webhook(request):
     """
     Webhook для Telegram бота
-    
+
     POST /telegram/webhook/
     """
     if request.method != 'POST':
@@ -190,3 +197,63 @@ def webhook(request):
     except Exception as e:
         logger.error(f"Ошибка webhook: {e}")
         return JsonResponse({'ok': False, 'error': str(e)})
+
+
+@csrf_exempt
+def telegram_visit(request):
+    """
+    Эндпоинт для логирования посещений Mini App
+    
+    POST /telegram/visit/
+    Body: {
+        "user_id": 123456789,
+        "action": "open" | "close",
+        "session_id": "unique-session-id",
+        "platform": "android" | "ios" | "web" | "desktop",
+        "start_param": "ref123"
+    }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        action = data.get('action', 'open')
+        session_id = data.get('session_id', '')
+        platform = data.get('platform', 'unknown')
+        start_param = data.get('start_param', '')
+
+        if not user_id:
+            return JsonResponse({'error': 'user_id required'}, status=400)
+
+        from store.models import TelegramUser
+        from telegram_app.models import VisitLog
+
+        tg_user = TelegramUser.objects.filter(telegram_id=user_id).first()
+        if not tg_user:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+        if action == 'open':
+            # Логируем открытие
+            VisitLog.log_open(
+                telegram_user=tg_user,
+                session_id=session_id,
+                platform=platform,
+                start_param=start_param,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            logger.info(f"Visit open: user {tg_user.telegram_id}, session {session_id}")
+
+        elif action == 'close':
+            # Закрываем сессию
+            count = VisitLog.close_session(tg_user, session_id)
+            logger.info(f"Visit close: user {tg_user.telegram_id}, closed {count} sessions")
+
+        return JsonResponse({'success': True})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Ошибка логирования посещения: {e}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
