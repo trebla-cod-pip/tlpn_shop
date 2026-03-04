@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.contrib import messages as django_messages
 import logging
@@ -38,8 +39,8 @@ class MessageAdmin(admin.ModelAdmin):
     def direction_badge(self, obj):
         """Иконка направления сообщения"""
         if obj.direction == 'outgoing':
-            return format_html('<span style="color: green;">→ Исходящее</span>')
-        return format_html('<span style="color: blue;">← Входящее</span>')
+            return mark_safe('<span style="color: green;">→ Исходящее</span>')
+        return mark_safe('<span style="color: blue;">← Входящее</span>')
     direction_badge.short_description = 'Направление'
 
     def status_badge(self, obj):
@@ -189,10 +190,10 @@ class VisitLogAdmin(admin.ModelAdmin):
     def status_badge(self, obj):
         """Иконка статуса"""
         if obj.status == 'closed':
-            return format_html('<span style="color: gray;">✓ Закрыто</span>')
+            return mark_safe('<span style="color: gray;">✓ Закрыто</span>')
         elif obj.status == 'opened':
-            return format_html('<span style="color: green;">○ Открыто</span>')
-        return format_html('<span style="color: orange;">⋅ Активно</span>')
+            return mark_safe('<span style="color: green;">○ Открыто</span>')
+        return mark_safe('<span style="color: orange;">⋅ Активно</span>')
     status_badge.short_description = 'Статус'
 
     def platform_icon(self, obj):
