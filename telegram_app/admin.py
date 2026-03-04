@@ -72,9 +72,11 @@ class MessageAdmin(admin.ModelAdmin):
 
     def delivery_info(self, obj):
         """Информация о доставке"""
+        from django.utils.safestring import mark_safe
+        
         if obj.direction == 'incoming':
             return 'Входящее сообщение'
-        
+
         info = []
         if obj.status == 'sent':
             info.append('⏳ Ожидает подтверждения доставки')
@@ -86,8 +88,10 @@ class MessageAdmin(admin.ModelAdmin):
             info.append('✗ Ошибка отправки')
         elif obj.status == 'pending':
             info.append('⏳ Ожидает отправки')
-        
-        return format_html('<br>'.join(info)) if info else '—'
+
+        if info:
+            return mark_safe('<br>'.join(info))
+        return '—'
     delivery_info.short_description = 'Информация о доставке'
 
     def send_selected_messages(self, request, queryset):
