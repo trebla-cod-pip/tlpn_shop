@@ -165,11 +165,12 @@ class MessageAdmin(admin.ModelAdmin):
 class VisitLogAdmin(admin.ModelAdmin):
     """Админка для журнала посещений"""
     list_display = ('telegram_user', 'status_badge', 'platform_icon', 'session_id_display', 'opened_at', 'closed_at', 'duration_display')
-    list_filter = ('status', 'platform', 'opened_at', 'closed_at')
+    list_filter = ('status', 'platform', 'opened_at')
     search_fields = ('telegram_user__username', 'telegram_user__first_name', 'telegram_user__last_name', 'session_id')
     readonly_fields = ('telegram_user', 'session_id', 'status', 'platform', 'opened_at', 'closed_at', 'duration', 'start_param', 'user_agent')
     ordering = ('-opened_at',)
     date_hierarchy = 'opened_at'
+    list_per_page = 50
 
     fieldsets = (
         ('Сессия', {

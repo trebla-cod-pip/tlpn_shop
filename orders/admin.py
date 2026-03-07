@@ -5,13 +5,14 @@ from orders.models import Order, OrderItem, OrderStatus
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ('product', 'quantity', 'price', 'total')
-    
+    readonly_fields = ('product', 'price', 'total')
+    fields = ('product', 'quantity', 'price', 'total')
+
     def has_add_permission(self, request, obj=None):
-        return False
-    
+        return True
+
     def has_delete_permission(self, request, obj=None):
-        return False
+        return True
 
 
 @admin.register(Order)
@@ -21,11 +22,17 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('telegram_first_name', 'telegram_last_name', 'telegram_username', 'phone', 'email', 'delivery_address')
     readonly_fields = (
         'telegram_user_id', 'telegram_username', 'telegram_first_name', 'telegram_last_name',
-        'total_amount', 'created_at', 'updated_at'
+        'created_at', 'updated_at'
     )
     ordering = ('-created_at',)
     inlines = [OrderItemInline]
     date_hierarchy = 'created_at'
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Пересчитываем общую сумму заказа
+        obj.total_amount = sum(item.total for item in obj.items.all())
+        obj.save(update_fields=['total_amount'])
     
     fieldsets = (
         ('Клиент', {

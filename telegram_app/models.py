@@ -211,22 +211,26 @@ class VisitLog(models.Model):
         Возвращает количество закрытых сессий
         """
         from django.utils import timezone
-        
+
         filters = {
             'telegram_user': telegram_user,
             'status': 'opened'
         }
         if session_id:
             filters['session_id'] = session_id
-        
+
         sessions = cls.objects.filter(**filters)
         count = sessions.count()
-        
+        now = timezone.now()
+
         for session in sessions:
             session.status = 'closed'
-            session.closed_at = timezone.now()
-            session.save(update_fields=['status', 'closed_at'])
-        
+            session.closed_at = now
+            # Вычисляем длительность в секундах
+            delta = now - session.opened_at
+            session.duration = int(delta.total_seconds())
+            session.save(update_fields=['status', 'closed_at', 'duration'])
+
         return count
 
     @classmethod
