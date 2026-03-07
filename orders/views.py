@@ -17,13 +17,15 @@ class OrderViewSet(
 ):
     """
     ViewSet для заказов
-    
+
     POST /api/orders/ - создать заказ
     GET /api/orders/ - список заказов пользователя (по telegram_user_id)
     GET /api/orders/{id}/ - детали заказа
     """
     queryset = Order.objects.select_related().prefetch_related('items__product')
     permission_classes = [AllowAny]
+    # Отключаем CSRF для API, так как запросы могут идти из Telegram Mini App
+    authentication_classes = []
 
     def get_serializer_class(self):
         if self.action == 'create':

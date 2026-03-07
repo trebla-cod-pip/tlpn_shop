@@ -50,6 +50,9 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
 }
 
 
@@ -196,6 +199,13 @@ except ImportError:
 # Добавляем заголовки кэширования для статических файлов
 if not DEBUG:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+
+# ============================================================================
+# CSRF Settings
+# ============================================================================
+# Разрешаем доступ к CSRF токену из JavaScript
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # ============================================================================
 # Sitemap Settings

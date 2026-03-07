@@ -30,20 +30,21 @@ class OrderAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        # Пересчитываем общую сумму заказа
-        obj.total_amount = sum(item.total for item in obj.items.all())
+        # Пересчитываем общую сумму заказа (товары + доставка)
+        items_total = sum(item.total for item in obj.items.all())
+        obj.total_amount = items_total + (obj.delivery_cost or 0)
         obj.save(update_fields=['total_amount'])
     
     fieldsets = (
         ('Клиент', {
             'fields': (
-                'telegram_user_id', 'telegram_username', 
+                'telegram_user_id', 'telegram_username',
                 'telegram_first_name', 'telegram_last_name',
                 'phone', 'email'
             )
         }),
         ('Доставка', {
-            'fields': ('delivery_address', 'delivery_date', 'delivery_time', 'comment')
+            'fields': ('delivery_address', 'delivery_date', 'delivery_time', 'delivery_cost', 'comment')
         }),
         ('Заказ', {
             'fields': ('status', 'total_amount')

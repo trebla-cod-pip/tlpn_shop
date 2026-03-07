@@ -29,8 +29,9 @@ class Order(models.Model):
     delivery_address = models.TextField(verbose_name='Адрес доставки')
     delivery_date = models.DateField(verbose_name='Дата доставки')
     delivery_time = models.CharField(max_length=50, blank=True, verbose_name='Время доставки')
+    delivery_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Стоимость доставки')
     comment = models.TextField(blank=True, verbose_name='Комментарий к заказу')
-    
+
     # Статус и оплата
     status = models.CharField(max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING, verbose_name='Статус')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Общая сумма')

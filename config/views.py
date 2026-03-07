@@ -116,8 +116,21 @@ def order_stats(request):
     Статистика заказов: сколько всего заказано по каждому товару
     Доступно только суперпользователям (staff)
     """
-    # Группируем по товарам и суммируем количество
-    stats = OrderItem.objects.values(
+    from orders.models import OrderStatus
+    
+    # Исключаем отмененные заказы из статистики
+    active_statuses = [
+        OrderStatus.PENDING,
+        OrderStatus.CONFIRMED,
+        OrderStatus.ASSEMBLING,
+        OrderStatus.DELIVERING,
+        OrderStatus.DELIVERED,
+    ]
+    
+    # Группируем по товарам и суммируем количество (только для активных заказов)
+    stats = OrderItem.objects.filter(
+        order__status__in=active_statuses
+    ).values(
         'product_id',
         'product__name',
         'product__slug',
@@ -128,10 +141,16 @@ def order_stats(request):
         total_revenue=Sum('total')
     ).order_by('-total_quantity')
 
-    # Общая статистика
-    total_orders = Order.objects.count()
-    total_items = sum(item['total_quantity'] for item in stats)
-    total_revenue = sum(item['total_revenue'] or 0 for item in stats)
+    # Общая статистика (только активные заказы)
+    total_orders = Order.objects.filter(status__in=active_statuses).count()
+    total_items = sum(item['total_quantity'] or 0 for item in stats)
+    
+    # Считаем общую выручку с учетом доставки (только активные заказы)
+    total_revenue = Order.objects.filter(
+        status__in=active_statuses
+    ).aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
 
     context = {
         'stats': stats,
